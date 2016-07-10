@@ -17,4 +17,5 @@
 
 .PHONY: start
 start:
+	@rake db:setup
 	@rails server
