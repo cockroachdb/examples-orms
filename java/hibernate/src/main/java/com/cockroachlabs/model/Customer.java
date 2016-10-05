@@ -3,7 +3,7 @@ package com.cockroachlabs.model;
 import javax.persistence.*;
 
 @Entity
-@Table(name="Customers")
+@Table(name="customers")
 public class Customer {
 
     @Id

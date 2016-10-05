@@ -5,7 +5,7 @@ import java.math.BigDecimal;
 import java.util.Set;
 
 @Entity
-@Table(name="Products")
+@Table(name="products")
 public class Product {
 
     @Id
