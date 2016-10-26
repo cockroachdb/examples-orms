@@ -1,6 +1,4 @@
-package main
-
-import "github.com/jinzhu/gorm"
+package model
 
 // Customer is a model in the "customers" table.
 type Customer struct {
@@ -24,8 +22,4 @@ type Product struct {
 	ID    int
 	Name  *string `gorm:"not null;unique"`
 	Price float64 `gorm:"type:decimal(18,2)"`
-}
-
-func migrateDB(db *gorm.DB) {
-	db.AutoMigrate(&Customer{}, &Order{}, &Product{})
 }

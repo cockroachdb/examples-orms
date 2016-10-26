@@ -15,11 +15,16 @@
 #
 # Author: Nathan VanBenschoten (nvanbenschoten@gmail.com)
 
-ifneq ($(ADDR),)
-ADDRFLAG = -addr=$(ADDR)
-endif
+GO ?= go
 
-.PHONY: start
-start:
-	@go build
-	@./gorm $(ADDRFLAG)
+.PHONY: all
+all: test
+
+.PHONY: test
+test:
+	$(GO) test -v -i ./testing
+	$(GO) test -v ./testing
+
+.PHONY: deps
+deps:
+	$(GO) get -d -t ./...

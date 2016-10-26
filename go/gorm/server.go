@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/cockroachdb/examples-orms/go/gorm/model"
 	"github.com/jinzhu/gorm"
 	"github.com/julienschmidt/httprouter"
 )
@@ -42,7 +43,7 @@ func (s *Server) RegisterRouter(router *httprouter.Router) {
 }
 
 func (s *Server) getCustomers(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	var customers []Customer
+	var customers []model.Customer
 	if err := s.db.Find(&customers).Error; err != nil {
 		http.Error(w, err.Error(), errToStatusCode(err))
 	} else {
@@ -51,7 +52,7 @@ func (s *Server) getCustomers(w http.ResponseWriter, r *http.Request, _ httprout
 }
 
 func (s *Server) createCustomer(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	var customer Customer
+	var customer model.Customer
 	if err := json.NewDecoder(r.Body).Decode(&customer); err != nil {
 		http.Error(w, err.Error(), errToStatusCode(err))
 		return
@@ -65,7 +66,7 @@ func (s *Server) createCustomer(w http.ResponseWriter, r *http.Request, ps httpr
 }
 
 func (s *Server) getCustomer(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	var customer Customer
+	var customer model.Customer
 	if err := s.db.Find(&customer, ps.ByName("customerID")).Error; err != nil {
 		http.Error(w, err.Error(), errToStatusCode(err))
 	} else {
@@ -74,7 +75,7 @@ func (s *Server) getCustomer(w http.ResponseWriter, r *http.Request, ps httprout
 }
 
 func (s *Server) updateCustomer(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	var customer Customer
+	var customer model.Customer
 	if err := json.NewDecoder(r.Body).Decode(&customer); err != nil {
 		http.Error(w, err.Error(), errToStatusCode(err))
 		return
@@ -90,7 +91,7 @@ func (s *Server) updateCustomer(w http.ResponseWriter, r *http.Request, ps httpr
 
 func (s *Server) deleteCustomer(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	customerID := ps.ByName("customerID")
-	req := s.db.Delete(Customer{}, "ID = ?", customerID)
+	req := s.db.Delete(model.Customer{}, "ID = ?", customerID)
 	if err := req.Error; err != nil {
 		http.Error(w, err.Error(), errToStatusCode(err))
 	} else if req.RowsAffected == 0 {
@@ -101,7 +102,7 @@ func (s *Server) deleteCustomer(w http.ResponseWriter, r *http.Request, ps httpr
 }
 
 func (s *Server) getProducts(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	var products []Product
+	var products []model.Product
 	if err := s.db.Find(&products).Error; err != nil {
 		http.Error(w, err.Error(), errToStatusCode(err))
 	} else {
@@ -110,7 +111,7 @@ func (s *Server) getProducts(w http.ResponseWriter, r *http.Request, _ httproute
 }
 
 func (s *Server) createProduct(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	var product Product
+	var product model.Product
 	if err := json.NewDecoder(r.Body).Decode(&product); err != nil {
 		http.Error(w, err.Error(), errToStatusCode(err))
 		return
@@ -124,7 +125,7 @@ func (s *Server) createProduct(w http.ResponseWriter, r *http.Request, ps httpro
 }
 
 func (s *Server) getProduct(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	var product Product
+	var product model.Product
 	if err := s.db.Find(&product, ps.ByName("productID")).Error; err != nil {
 		http.Error(w, err.Error(), errToStatusCode(err))
 	} else {
@@ -133,7 +134,7 @@ func (s *Server) getProduct(w http.ResponseWriter, r *http.Request, ps httproute
 }
 
 func (s *Server) updateProduct(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	var product Product
+	var product model.Product
 	if err := json.NewDecoder(r.Body).Decode(&product); err != nil {
 		http.Error(w, err.Error(), errToStatusCode(err))
 		return
@@ -149,7 +150,7 @@ func (s *Server) updateProduct(w http.ResponseWriter, r *http.Request, ps httpro
 
 func (s *Server) deleteProduct(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	productID := ps.ByName("productID")
-	req := s.db.Delete(Product{}, "ID = ?", productID)
+	req := s.db.Delete(model.Product{}, "ID = ?", productID)
 	if err := req.Error; err != nil {
 		http.Error(w, err.Error(), errToStatusCode(err))
 	} else if req.RowsAffected == 0 {
@@ -160,7 +161,7 @@ func (s *Server) deleteProduct(w http.ResponseWriter, r *http.Request, ps httpro
 }
 
 func (s *Server) getOrders(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	var orders []Order
+	var orders []model.Order
 	if err := s.db.Preload("Customer").Preload("Products").Find(&orders).Error; err != nil {
 		http.Error(w, err.Error(), errToStatusCode(err))
 	} else {
@@ -169,7 +170,7 @@ func (s *Server) getOrders(w http.ResponseWriter, r *http.Request, _ httprouter.
 }
 
 func (s *Server) createOrder(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	var order Order
+	var order model.Order
 	if err := json.NewDecoder(r.Body).Decode(&order); err != nil {
 		http.Error(w, err.Error(), errToStatusCode(err))
 		return
@@ -183,7 +184,7 @@ func (s *Server) createOrder(w http.ResponseWriter, r *http.Request, ps httprout
 }
 
 func (s *Server) getOrder(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	var order Order
+	var order model.Order
 	if err := s.db.Preload("Customer").Preload("Products").Find(&order, ps.ByName("orderID")).Error; err != nil {
 		http.Error(w, err.Error(), errToStatusCode(err))
 	} else {
@@ -192,7 +193,7 @@ func (s *Server) getOrder(w http.ResponseWriter, r *http.Request, ps httprouter.
 }
 
 func (s *Server) updateOrder(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	var order Order
+	var order model.Order
 	if err := json.NewDecoder(r.Body).Decode(&order); err != nil {
 		http.Error(w, err.Error(), errToStatusCode(err))
 		return
@@ -208,7 +209,7 @@ func (s *Server) updateOrder(w http.ResponseWriter, r *http.Request, ps httprout
 
 func (s *Server) deleteOrder(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	orderID := ps.ByName("orderID")
-	req := s.db.Delete(Order{}, "ID = ?", orderID)
+	req := s.db.Delete(model.Order{}, "ID = ?", orderID)
 	if err := req.Error; err != nil {
 		http.Error(w, err.Error(), errToStatusCode(err))
 	} else if req.RowsAffected == 0 {
@@ -221,7 +222,7 @@ func (s *Server) deleteOrder(w http.ResponseWriter, r *http.Request, ps httprout
 func (s *Server) addProductToOrder(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	tx := s.db.Begin()
 
-	var order Order
+	var order model.Order
 	orderID := ps.ByName("orderID")
 	if err := tx.Preload("Products").First(&order, orderID).Error; err != nil {
 		tx.Rollback()
@@ -237,7 +238,7 @@ func (s *Server) addProductToOrder(w http.ResponseWriter, r *http.Request, ps ht
 		return
 	}
 
-	var addedProduct Product
+	var addedProduct model.Product
 	if err := tx.First(&addedProduct, productID).Error; err != nil {
 		tx.Rollback()
 		http.Error(w, err.Error(), errToStatusCode(err))
