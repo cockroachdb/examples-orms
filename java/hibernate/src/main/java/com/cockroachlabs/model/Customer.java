@@ -8,10 +8,10 @@ public class Customer {
 
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
-    @Column(name="ID", nullable=false, unique=true)
+    @Column(name="id", nullable=false, unique=true)
     private long id;
 
-    @Column(name="NAME")
+    @Column(name="name")
     private String name;
 
     public long getId() {

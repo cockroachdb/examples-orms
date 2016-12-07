@@ -10,20 +10,20 @@ public class Order {
 
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
-    @Column(name="ID", nullable=false, unique=true)
+    @Column(name="id", nullable=false, unique=true)
     private long id;
 
-    @Column(name="SUBTOTAL", precision=18, scale=2)
+    @Column(name="subtotal", precision=18, scale=2)
     private BigDecimal subtotal;
 
     @ManyToOne
-    @JoinColumn(name="CUSTOMER_ID")
+    @JoinColumn(name="customer_id")
     private Customer customer;
 
     @ManyToMany()
-    @JoinTable(name="PRODUCT_ORDERS",
-               joinColumns=@JoinColumn(name="ORDER_ID"),
-               inverseJoinColumns=@JoinColumn(name="PRODUCT_ID"))
+    @JoinTable(name="product_orders",
+               joinColumns=@JoinColumn(name="order_id"),
+               inverseJoinColumns=@JoinColumn(name="product_id"))
     private Set<Product> products;
 
     public long getId() {

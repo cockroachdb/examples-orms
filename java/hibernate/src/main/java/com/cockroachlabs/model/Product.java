@@ -10,13 +10,13 @@ public class Product {
 
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
-    @Column(name="ID", nullable=false, unique=true)
+    @Column(name="id", nullable=false, unique=true)
     private long id;
 
-    @Column(name="NAME")
+    @Column(name="name")
     private String name;
 
-    @Column(name="PRODUCT", precision=18, scale=2)
+    @Column(name="product", precision=18, scale=2)
     private BigDecimal product;
 
     @ManyToMany(cascade=CascadeType.ALL, mappedBy="products")
