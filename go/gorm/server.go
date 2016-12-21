@@ -22,6 +22,8 @@ func NewServer(db *gorm.DB) *Server {
 
 // RegisterRouter registers a router onto the Server.
 func (s *Server) RegisterRouter(router *httprouter.Router) {
+	router.GET("/ping", s.ping)
+
 	router.GET("/customer", s.getCustomers)
 	router.POST("/customer", s.createCustomer)
 	router.GET("/customer/:customerID", s.getCustomer)
@@ -40,6 +42,10 @@ func (s *Server) RegisterRouter(router *httprouter.Router) {
 	router.PUT("/order/:orderID", s.updateOrder)
 	router.DELETE("/order/:orderID", s.deleteOrder)
 	router.POST("/order/:orderID/product", s.addProductToOrder)
+}
+
+func (s *Server) ping(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	writeTextResult(w, "pong")
 }
 
 func (s *Server) getCustomers(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -176,6 +182,26 @@ func (s *Server) createOrder(w http.ResponseWriter, r *http.Request, ps httprout
 		return
 	}
 
+	if order.Customer.ID == 0 {
+		http.Error(w, "must specify user", http.StatusBadRequest)
+		return
+	}
+	if err := s.db.Find(&order.Customer, order.Customer.ID).Error; err != nil {
+		http.Error(w, err.Error(), errToStatusCode(err))
+		return
+	}
+
+	for i, product := range order.Products {
+		if product.ID == 0 {
+			http.Error(w, "must specify a product ID", http.StatusBadRequest)
+			return
+		}
+		if err := s.db.Find(&order.Products[i], product.ID).Error; err != nil {
+			http.Error(w, err.Error(), errToStatusCode(err))
+			return
+		}
+	}
+
 	if err := s.db.Create(&order).Error; err != nil {
 		http.Error(w, err.Error(), errToStatusCode(err))
 	} else {
@@ -260,14 +286,14 @@ func (s *Server) addProductToOrder(w http.ResponseWriter, r *http.Request, ps ht
 }
 
 func writeTextResult(w http.ResponseWriter, res string) {
-	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
 	fmt.Fprintln(w, res)
 }
 
 func writeJSONResult(w http.ResponseWriter, res interface{}) {
-	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(res); err != nil {
 		panic(err)
 	}
