@@ -21,7 +21,7 @@ public class Order {
     private Customer customer;
 
     @ManyToMany()
-    @JoinTable(name="product_orders",
+    @JoinTable(name="order_products",
                joinColumns=@JoinColumn(name="order_id"),
                inverseJoinColumns=@JoinColumn(name="product_id"))
     private Set<Product> products;

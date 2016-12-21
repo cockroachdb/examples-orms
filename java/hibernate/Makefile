@@ -15,6 +15,10 @@
 #
 # Author: Nathan VanBenschoten (nvanbenschoten@gmail.com)
 
+ifneq ($(ADDR),)
+ADDRFLAG = -PappArgs="['-addr', '$(ADDR)']"
+endif
+
 .PHONY: start
 start:
-	@gradle run
+	@gradle run $(ADDRFLAG)

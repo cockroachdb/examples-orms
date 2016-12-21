@@ -1,48 +1,47 @@
 package com.cockroachlabs;
 
-import com.cockroachlabs.model.Customer;
-import com.cockroachlabs.model.Order;
-import com.cockroachlabs.model.Product;
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
-import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.hibernate.cfg.Configuration;
-import org.hibernate.service.ServiceRegistry;
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+import com.cockroachlabs.services.CustomerService;
+import com.cockroachlabs.services.OrderService;
+import com.cockroachlabs.services.PingService;
+import com.cockroachlabs.services.ProductService;
+import com.cockroachlabs.util.SessionUtil;
+import org.glassfish.jersey.netty.httpserver.NettyHttpContainerProvider;
+import org.glassfish.jersey.server.ResourceConfig;
 
-import java.math.BigDecimal;
+import javax.ws.rs.core.UriBuilder;
+import java.net.URI;
 
 public class Application {
 
+    @Parameter(names = "-addr", description = "the address of the database")
+    private String dbAddr;
+
     public static void main(String[] args) {
-        try (SessionFactory sf = buildSessionFactory()) {
-            Session session = sf.getCurrentSession();
-
-            Customer c = new Customer();
-            c.setName("joe");
-
-            Order o = new Order();
-            o.setCustomer(c);
-            o.setSubtotal(new BigDecimal(100));
-
-            session.beginTransaction();
-            session.save(c);
-            session.save(o);
-            session.getTransaction().commit();
-        }
+        Application app = new Application();
+        new JCommander(app, args);
+        app.run();
     }
 
-    private static SessionFactory buildSessionFactory() {
-        Configuration configuration = new Configuration();
-        configuration.configure("hibernate.cfg.xml");
-        configuration.addAnnotatedClass(Customer.class);
-        configuration.addAnnotatedClass(Order.class);
-        configuration.addAnnotatedClass(Product.class);
+    private void run() {
+        initHibernate();
+        initHTTPServer();
+    }
 
-        ServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder()
-                .applySettings(configuration.getProperties())
-                .build();
+    private void initHibernate() {
+        SessionUtil.init(dbAddr);
+    }
 
-        return configuration.buildSessionFactory(serviceRegistry);
+    private void initHTTPServer() {
+        URI baseUri = UriBuilder.fromUri("http://localhost/").port(6543).build();
+        ResourceConfig resourceConfig = new ResourceConfig(
+                PingService.class,
+                CustomerService.class,
+                ProductService.class,
+                OrderService.class
+        );
+        NettyHttpContainerProvider.createServer(baseUri, resourceConfig, true);
     }
 
 }

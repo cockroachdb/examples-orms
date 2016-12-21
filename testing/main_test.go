@@ -219,3 +219,7 @@ func testORM(t *testing.T, language, orm string) {
 func TestGORM(t *testing.T) {
 	testORM(t, "go", "gorm")
 }
+
+func TestHibernate(t *testing.T) {
+	testORM(t, "java", "hibernate")
+}

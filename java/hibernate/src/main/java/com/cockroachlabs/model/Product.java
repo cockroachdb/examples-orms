@@ -16,8 +16,8 @@ public class Product {
     @Column(name="name")
     private String name;
 
-    @Column(name="product", precision=18, scale=2)
-    private BigDecimal product;
+    @Column(name="price", precision=18, scale=2)
+    private BigDecimal price;
 
     @ManyToMany(cascade=CascadeType.ALL, mappedBy="products")
     private Set<Order> orders;
@@ -38,12 +38,12 @@ public class Product {
         this.name = name;
     }
 
-    public BigDecimal getProduct() {
-        return product;
+    public BigDecimal getPrice() {
+        return price;
     }
 
-    public void setProduct(BigDecimal product) {
-        this.product = product;
+    public void setPrice(BigDecimal price) {
+        this.price = price;
     }
 
     public Set<Order> getOrders() {
