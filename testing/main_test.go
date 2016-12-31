@@ -18,7 +18,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// application represents a single instance of a application running an ORM and
+// application represents a single instance of an application running an ORM and
 // exposing an HTTP REST API.
 type application struct {
 	language string
@@ -33,6 +33,7 @@ func (app application) dbName() string {
 	return fmt.Sprintf("company_%s", app.orm)
 }
 
+// initTestDatabase launches a test database as a subprocess.
 func initTestDatabase(t *testing.T, app application) (*sql.DB, *url.URL, func()) {
 	ts, err := testserver.NewTestServer()
 	if err != nil {
@@ -56,13 +57,17 @@ func initTestDatabase(t *testing.T, app application) (*sql.DB, *url.URL, func())
 
 	ts.WaitForInit(db)
 
+	// Create the database if it does not exist.
 	if _, err := db.Exec("CREATE DATABASE IF NOT EXISTS " + app.dbName()); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := db.Exec("SET DATABASE = " + app.dbName()); err != nil {
+
+	// Connect to the database again, now with the database in the URL.
+	url.Path = app.dbName()
+	db, err = sql.Open("postgres", url.String())
+	if err != nil {
 		t.Fatal(err)
 	}
-	url.Path = app.dbName()
 
 	return db, url, func() {
 		_ = db.Close()
@@ -70,7 +75,11 @@ func initTestDatabase(t *testing.T, app application) (*sql.DB, *url.URL, func())
 	}
 }
 
-func initORMApp(t *testing.T, app application, dbURL *url.URL) func() {
+type killFunc func()
+type restartFunc func() (killFunc, restartFunc)
+
+// initORMApp launches an ORM application as a subprocess.
+func initORMApp(t *testing.T, app application, dbURL *url.URL) (killFunc, restartFunc) {
 	addrFlag := fmt.Sprintf("ADDR=%s", dbURL.String())
 	args := []string{"make", "start", "-C", app.dir(), addrFlag}
 
@@ -79,8 +88,12 @@ func initORMApp(t *testing.T, app application, dbURL *url.URL) func() {
 	// make will launch the application in a child process, and this is the most
 	// straightforward way to kill all ancestors.
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	killed := false
 	killCmd := func() {
-		syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+		if !killed {
+			syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+		}
+		killed = true
 	}
 
 	// Set up stderr so we can later verify that it's clean.
@@ -88,18 +101,46 @@ func initORMApp(t *testing.T, app application, dbURL *url.URL) func() {
 	cmd.Stderr = stderr
 
 	if err := cmd.Start(); err != nil {
+		killCmd()
 		t.Fatal(err)
 	}
 	if cmd.Process != nil {
 		log.Printf("process %d started: %s", cmd.Process.Pid, strings.Join(args, " "))
 	}
 
-	time.Sleep(3 * time.Second)
+	if err := waitForInit(); err != nil {
+		killCmd()
+		t.Fatalf("error waiting for http server initialization: %v stderr=%s", err, stderr.String())
+	}
 	if s := stderr.String(); len(s) > 0 {
+		killCmd()
 		t.Fatalf("stderr=%s", s)
 	}
 
-	return killCmd
+	restartCmd := func() (killFunc, restartFunc) {
+		killCmd()
+		return initORMApp(t, app, dbURL)
+	}
+
+	return killCmd, restartCmd
+}
+
+// waitForInit retries until a connection is successfully established.
+func waitForInit() error {
+	const maxWait = 15 * time.Second
+	const waitDelay = 250 * time.Millisecond
+	const maxWaitLoops = int(maxWait / waitDelay)
+
+	var err error
+	var api apiHandler
+	for i := 0; i < maxWaitLoops; i++ {
+		if err = api.ping(); err == nil {
+			return err
+		}
+		log.Printf("waitForInit: %v", err)
+		time.Sleep(waitDelay)
+	}
+	return err
 }
 
 func testORM(t *testing.T, language, orm string) {
@@ -111,7 +152,7 @@ func testORM(t *testing.T, language, orm string) {
 	db, dbURL, stopDB := initTestDatabase(t, app)
 	defer stopDB()
 
-	stopApp := initORMApp(t, app, dbURL)
+	stopApp, restartApp := initORMApp(t, app, dbURL)
 	defer stopApp()
 
 	td := testDriver{
@@ -120,27 +161,59 @@ func testORM(t *testing.T, language, orm string) {
 	}
 
 	// Test that the correct tables were generated.
-	t.Run("TestGeneratedTables", td.TestGeneratedTables)
+	t.Run("GeneratedTables", td.TestGeneratedTables)
 
 	// Test that the correct columns in those tables were generated.
-	t.Run("TestGeneratedCustomersTableColumns", td.TestGeneratedCustomersTableColumns)
-	t.Run("TestGeneratedOrdersTableColumns", td.TestGeneratedOrdersTableColumns)
-	t.Run("TestGeneratedProductsTableColumns", td.TestGeneratedProductsTableColumns)
-	t.Run("TestGeneratedOrderProductsTableColumns", td.TestGeneratedOrderProductsTableColumns)
+	t.Run("GeneratedColumns", parallelTestGroup{
+		"CustomersTable":     td.TestGeneratedCustomersTableColumns,
+		"ProductsTable":      td.TestGeneratedProductsTableColumns,
+		"OrdersTable":        td.TestGeneratedOrdersTableColumns,
+		"OrderProductsTable": td.TestGeneratedOrderProductsTableColumns,
+	}.T)
 
 	// Test that the tables begin empty.
-	t.Run("TestOrdersTableEmpty", td.TestOrdersTableEmpty)
-	t.Run("TestProductsTableEmpty", td.TestProductsTableEmpty)
-	t.Run("TestCustomersEmpty", td.TestCustomersEmpty)
-	t.Run("TestOrderProductsTableEmpty", td.TestOrderProductsTableEmpty)
+	t.Run("EmptyTables", parallelTestGroup{
+		"CustomersTable":     td.TestCustomersEmpty,
+		"ProductsTable":      td.TestProductsTableEmpty,
+		"OrdersTable":        td.TestOrdersTableEmpty,
+		"OrderProductsTable": td.TestOrderProductsTableEmpty,
+	}.T)
 
-	// Test the creation of objects.
-	t.Run("TestRetrieveCustomerBeforeCreation", td.TestRetrieveCustomerBeforeCreation)
-	t.Run("TestRetrieveProductBeforeCreation", td.TestRetrieveProductBeforeCreation)
-	t.Run("TestCreateCustomer", td.TestCreateCustomer)
-	t.Run("TestCreateProduct", td.TestCreateProduct)
-	t.Run("TestRetrieveCustomerAfterCreation", td.TestRetrieveCustomerAfterCreation)
-	t.Run("TestRetrieveProductAfterCreation", td.TestRetrieveProductAfterCreation)
+	// Test that the API returns empty sets for each collection.
+	t.Run("RetrieveFromAPIBeforeCreation", parallelTestGroup{
+		"Customers": td.TestRetrieveCustomersBeforeCreation,
+		"Products":  td.TestRetrieveProductsBeforeCreation,
+		"Orders":    td.TestRetrieveOrdersBeforeCreation,
+	}.T)
+
+	// Test the creation of initial objects.
+	t.Run("CreateCustomer", td.TestCreateCustomer)
+	t.Run("CreateProduct", td.TestCreateProduct)
+
+	// Test that the API returns what we just created.
+	t.Run("RetrieveFromAPIAfterInitialCreation", parallelTestGroup{
+		"Customers": td.TestRetrieveCustomerAfterCreation,
+		"Products":  td.TestRetrieveProductAfterCreation,
+	}.T)
+
+	// Test the creation of dependent objects.
+	t.Run("CreateOrder", td.TestCreateOrder)
+
+	// Test that the API returns what we just created.
+	t.Run("RetrieveFromAPIAfterDependentCreation", parallelTestGroup{
+		"Order": td.TestRetrieveProductAfterCreation,
+	}.T)
+
+	// Restart the application.
+	stopApp, restartApp = restartApp()
+	defer stopApp()
+
+	// Test that the API still returns all created objects.
+	t.Run("RetrieveFromAPIAfterRestart", parallelTestGroup{
+		"Customers": td.TestRetrieveCustomerAfterCreation,
+		"Products":  td.TestRetrieveProductAfterCreation,
+		"Order":     td.TestRetrieveProductAfterCreation,
+	}.T)
 }
 
 func TestGORM(t *testing.T) {

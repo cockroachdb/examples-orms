@@ -27,6 +27,19 @@ var (
 	productPrice1Float = 123.4
 )
 
+// parallelTestGroup maps a set of names to test functions, and will run each
+// entry as a subtest in parallel by passing its T method to t.Run.
+type parallelTestGroup map[string]func(t *testing.T)
+
+func (ptg parallelTestGroup) T(t *testing.T) {
+	for name, f := range ptg {
+		t.Run(name, func(subT *testing.T) {
+			subT.Parallel()
+			f(subT)
+		})
+	}
+}
+
 // testDriver holds testing state and provides a suite of test methods that
 // incrementally stress ORM functionality.
 type testDriver struct {
@@ -90,7 +103,7 @@ func (td testDriver) testTableEmpty(t *testing.T, table string) {
 	td.queryAndAssert(t, []string{"0"}, fmt.Sprintf(`SELECT COUNT(*) FROM %s`, table))
 }
 
-func (td testDriver) TestRetrieveCustomerBeforeCreation(t *testing.T) {
+func (td testDriver) TestRetrieveCustomersBeforeCreation(t *testing.T) {
 	found, err := td.api.queryCustomers()
 	if err != nil {
 		t.Fatal(err)
@@ -101,7 +114,7 @@ func (td testDriver) TestRetrieveCustomerBeforeCreation(t *testing.T) {
 		t.Fatalf("expecting customers from api before creation to be %v, found %v", expected, found)
 	}
 }
-func (td testDriver) TestRetrieveProductBeforeCreation(t *testing.T) {
+func (td testDriver) TestRetrieveProductsBeforeCreation(t *testing.T) {
 	found, err := td.api.queryProducts()
 	if err != nil {
 		t.Fatal(err)
@@ -110,6 +123,17 @@ func (td testDriver) TestRetrieveProductBeforeCreation(t *testing.T) {
 	expected := []model.Product{}
 	if !reflect.DeepEqual(expected, found) {
 		t.Fatalf("expecting products from api before creation to be %v, found %v", expected, found)
+	}
+}
+func (td testDriver) TestRetrieveOrdersBeforeCreation(t *testing.T) {
+	found, err := td.api.queryOrders()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected := []model.Order{}
+	if !reflect.DeepEqual(expected, found) {
+		t.Fatalf("expecting orders from api before creation to be %v, found %v", expected, found)
 	}
 }
 
@@ -126,6 +150,33 @@ func (td testDriver) TestCreateProduct(t *testing.T) {
 	td.queryAndAssert(t, []string{row(productName1, productPrice1)}, fmt.Sprintf(`SELECT name, price FROM %s`, productsTable))
 }
 
+func (td testDriver) TestCreateOrder(t *testing.T) {
+	// Get the single customer ID.
+	customerIDs, err := td.queryIDs(t, customersTable)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(customerIDs) != 1 {
+		t.Fatalf("expected a single customer ID, found %v", customerIDs)
+	}
+	customerID := customerIDs[0]
+
+	// Get the single product.
+	productIDs, err := td.queryIDs(t, productsTable)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(productIDs) != 1 {
+		t.Fatalf("expected a single product ID, found %v", productIDs)
+	}
+	productID := productIDs[0]
+
+	if err := td.api.createOrder(customerID, productID, productPrice1Float); err != nil {
+		t.Fatalf("error creating order: %v", err)
+	}
+	td.queryAndAssert(t, []string{row(productPrice1Float)}, fmt.Sprintf(`SELECT subtotal FROM %s`, ordersTable))
+}
+
 func (td testDriver) TestRetrieveCustomerAfterCreation(t *testing.T) {
 	found, err := td.api.queryCustomers()
 	if err != nil {
@@ -135,7 +186,7 @@ func (td testDriver) TestRetrieveCustomerAfterCreation(t *testing.T) {
 	expected := []model.Customer{
 		{Name: &customerName1},
 	}
-	if !reflect.DeepEqual(expected, found) {
+	if !reflect.DeepEqual(expected, cleanCustomers(found)) {
 		t.Fatalf("expecting customers from api after creation to be %v, found %v", expected, found)
 	}
 }
@@ -148,9 +199,40 @@ func (td testDriver) TestRetrieveProductAfterCreation(t *testing.T) {
 	expected := []model.Product{
 		{Name: &productName1, Price: productPrice1Float},
 	}
-	if !reflect.DeepEqual(expected, found) {
+	if !reflect.DeepEqual(expected, cleanProducts(found)) {
 		t.Fatalf("expecting products from api after creation to be %v, found %v", expected, found)
 	}
+}
+func (td testDriver) TestRetrieveOrderAfterCreation(t *testing.T) {
+	found, err := td.api.queryOrders()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected := []model.Order{
+		{Subtotal: productPrice1Float},
+	}
+	if !reflect.DeepEqual(expected, cleanOrders(found)) {
+		t.Fatalf("expecting orders from api after creation to be %v, found %v", expected, found)
+	}
+}
+
+func (td testDriver) queryIDs(t *testing.T, table string) ([]int, error) {
+	rows, err := td.db.Query(fmt.Sprintf("SELECT id FROM %s", table))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var ids []int
+	for rows.Next() {
+		var id int
+		rows.Scan(&id)
+		ids = append(ids, id)
+	}
+	if err := rows.Err(); err != nil {
+		t.Fatal(err)
+	}
+	return ids, nil
 }
 
 func (td testDriver) queryAndAssert(t *testing.T, expected []string, query string, args ...interface{}) {

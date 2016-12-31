@@ -11,6 +11,7 @@ import (
 const (
 	applicationAddr = "http://localhost:6543"
 
+	pingPath      = applicationAddr + "/ping"
 	customersPath = applicationAddr + "/customer"
 	ordersPath    = applicationAddr + "/order"
 	productsPath  = applicationAddr + "/product"
@@ -23,19 +24,31 @@ const (
 // across all ORMs.
 type apiHandler struct{}
 
+func (apiHandler) ping() error {
+	_, err := http.Get(pingPath)
+	return err
+}
+
 func (apiHandler) queryCustomers() ([]model.Customer, error) {
 	var customers []model.Customer
 	if err := getJSON(customersPath, &customers); err != nil {
 		return nil, err
 	}
-	return cleanCustomers(customers), nil
+	return customers, nil
 }
 func (apiHandler) queryProducts() ([]model.Product, error) {
 	var products []model.Product
 	if err := getJSON(productsPath, &products); err != nil {
 		return nil, err
 	}
-	return cleanProducts(products), nil
+	return products, nil
+}
+func (apiHandler) queryOrders() ([]model.Order, error) {
+	var orders []model.Order
+	if err := getJSON(ordersPath, &orders); err != nil {
+		return nil, err
+	}
+	return orders, nil
 }
 
 func (apiHandler) createCustomer(name string) error {
@@ -45,6 +58,14 @@ func (apiHandler) createCustomer(name string) error {
 func (apiHandler) createProduct(name string, price float64) error {
 	product := model.Product{Name: &name, Price: price}
 	return postJSONData(productsPath, product)
+}
+func (apiHandler) createOrder(customerID, productID int, subtotal float64) error {
+	order := model.Order{
+		Customer: model.Customer{ID: customerID},
+		Products: []model.Product{{ID: productID}},
+		Subtotal: subtotal,
+	}
+	return postJSONData(ordersPath, order)
 }
 
 func getJSON(path string, result interface{}) error {
@@ -79,4 +100,13 @@ func cleanProducts(products []model.Product) []model.Product {
 		products[i].ID = 0
 	}
 	return products
+}
+func cleanOrders(orders []model.Order) []model.Order {
+	for i := range orders {
+		orders[i].ID = 0
+		orders[i].Customer = model.Customer{}
+		orders[i].CustomerID = 0
+		orders[i].Products = nil
+	}
+	return orders
 }
