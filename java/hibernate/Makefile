@@ -15,7 +15,7 @@
 #
 # Author: Nathan VanBenschoten (nvanbenschoten@gmail.com)
 
-GRADLE ?= gradle
+GRADLE ?= ./gradlew
 
 .PHONY: all
 all: start
