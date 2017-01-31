@@ -127,7 +127,7 @@ func initORMApp(t *testing.T, app application, dbURL *url.URL) (killFunc, restar
 
 // waitForInit retries until a connection is successfully established.
 func waitForInit() error {
-	const maxWait = 15 * time.Second
+	const maxWait = 3 * time.Minute
 	const waitDelay = 250 * time.Millisecond
 	const maxWaitLoops = int(maxWait / waitDelay)
 
