@@ -28,3 +28,4 @@ test:
 .PHONY: deps
 deps:
 	$(GO) get -d -t ./...
+	$(MAKE) deps -C ./java/hibernate
