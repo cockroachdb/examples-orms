@@ -31,5 +31,10 @@ test:
 
 .PHONY: deps
 deps:
+	# TODO(nvanbenschoten) The following two lines are required for CI until
+	# the Azure-Agents get updated next. If you are reading this, the lines
+	# can probably be deleted now.
+	rm -rf ../../lib/pq
+	rm -rf ../../cockroachdb/cockroach-go
 	$(GO) get -d -t ./...
 	$(MAKE) deps -C ./java/hibernate
