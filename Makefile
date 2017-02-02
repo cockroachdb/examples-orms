@@ -20,10 +20,14 @@ GO ?= go
 .PHONY: all
 all: test
 
+ifneq ($(COCKROACH_BINARY),)
+BINARYFLAG = -cockroach-binary=$(COCKROACH_BINARY)
+endif
+
 .PHONY: test
 test:
 	$(GO) test -v -i ./testing
-	$(GO) test -v ./testing
+	$(GO) test -v ./testing $(BINARYFLAG)
 
 .PHONY: deps
 deps:
