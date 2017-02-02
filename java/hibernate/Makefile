@@ -15,10 +15,19 @@
 #
 # Author: Nathan VanBenschoten (nvanbenschoten@gmail.com)
 
+GRADLE ?= ./gradlew
+
+.PHONY: all
+all: start
+
 ifneq ($(ADDR),)
 ADDRFLAG = -PappArgs="['-addr', '$(ADDR)']"
 endif
 
 .PHONY: start
 start:
-	@gradle run $(ADDRFLAG)
+	@$(GRADLE) run $(ADDRFLAG)
+
+.PHONY: deps
+deps:
+	$(GRADLE) assemble
