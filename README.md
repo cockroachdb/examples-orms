@@ -7,6 +7,21 @@ spec presented below.
 See the [CockroachDB ORM Compatibility Plan](https://docs.google.com/a/cockroachlabs.com/spreadsheets/d/17A0EflPqI9yhargK0n4tSw2WogQuVc5YeK-VFmKvXHM/edit?usp=sharing)
 for a roadmap towards supporting various ORMs.
 
+## Testing
+
+To run automated testing against all ORMs using the latest binary of CockroachDB,
+simply run:
+
+```
+make test
+```
+
+To run automated testing against all ORMs using a custom CockroachDB binary, run:
+
+```
+make test COCKROACH_BINARY=/path/to/binary/cockroach
+```
+
 ## Project Structure
 
 The repository contains a set of directories named after programming
@@ -39,7 +54,7 @@ language/ORM.
 
 ### Schema
 
-A schema diagram for the sample application looks like:
+An ideal schema diagram for the sample application looks like:
 
 ```
 Customer
@@ -48,7 +63,8 @@ Customer
 Order  <->  Product 
 ```
 
-The schema is implemented to look as close as possible to:
+The schema is implemented by each application using ORM-specific constructs to look as
+close as possible to:
 
 ```sql
 CREATE DATABASE IF NOT EXISTS company_{language}_{ORM};
@@ -102,15 +118,6 @@ DELETE /order
 ```
 
 The semantics of each endpoint will be fleshed out when necessary.
-
-## Testing
-
-_Automated testing does not have to be included in the initial development of this repo._
-
-To test each application, a CockroachDB instance will be spun up, and 
-each test example will be run against it in a Docker container using `make start`.
-A series of HTTP requests with an expected output will be issued against each example,
-and the results will be verified.
 
 ## Unresolved Questions
 
