@@ -1,3 +1,3 @@
-class Customer < ApplicationRecord
-    has_many :orders
+class Customer < ActiveRecord::Base
+  attr_accessible :name
 end

@@ -1,3 +1,6 @@
-class Product < ApplicationRecord
-    has_and_belongs_to_many :orders
+class Product < ActiveRecord::Base
+  attr_accessible :name, :price
+
+  has_many :line_items
+  has_many :orders, :through => :line_items
 end
