@@ -26,5 +26,10 @@ module Activerecord
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
+
+    # TODO(jordan): https://github.com/cockroachdb/activerecord-cockroachdb-
+    # adapter/issues/2.
+    #
+    # config.active_record.schema_format = :sql
   end
 end
