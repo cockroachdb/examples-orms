@@ -85,20 +85,23 @@ func initORMApp(t *testing.T, app application, dbURL *url.URL) (killFunc, restar
 
 	cmd := exec.Command(args[0], args[1:]...)
 
+	// Set up stderr so we can later verify that it's clean.
+	stderr := new(bytes.Buffer)
+	cmd.Stderr = stderr
+
 	// make will launch the application in a child process, and this is the most
 	// straightforward way to kill all ancestors.
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	killed := false
 	killCmd := func() {
+		if s := stderr.String(); len(s) > 0 {
+			log.Print("app error:", s)
+		}
 		if !killed {
 			syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
 		}
 		killed = true
 	}
-
-	// Set up stderr so we can later verify that it's clean.
-	stderr := new(bytes.Buffer)
-	cmd.Stderr = stderr
 
 	if err := cmd.Start(); err != nil {
 		killCmd()
