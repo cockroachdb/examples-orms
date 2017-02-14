@@ -241,3 +241,7 @@ func TestGORM(t *testing.T) {
 func TestHibernate(t *testing.T) {
 	testORM(t, "java", "hibernate")
 }
+
+func TestActiveRecord(t *testing.T) {
+	testORM(t, "ruby", "activerecord")
+}
