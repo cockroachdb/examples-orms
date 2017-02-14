@@ -52,3 +52,4 @@ deps:
 	rm -rf ../../cockroachdb/cockroach-go
 	$(GO) get -d -t ./...
 	$(MAKE) deps -C ./java/hibernate
+	$(MAKE) deps -C ./ruby/activerecord
