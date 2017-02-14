@@ -12,30 +12,15 @@
 # implied. See the License for the specific language governing
 # permissions and limitations under the License. See the AUTHORS file
 # for names of contributors.
-#
-# Author: Nathan VanBenschoten (nvanbenschoten@gmail.com)
 
-GO ?= go
+ADDR ?= cockroachdb://root@localhost:26257/company_sqlalchemy?sslmode=disable
 
-.PHONY: all
-all: test
-
-ifneq ($(COCKROACH_BINARY),)
-BINARYFLAG = -cockroach-binary=$(COCKROACH_BINARY)
-endif
-
-.PHONY: test
-test:
-	$(GO) test -v -i ./testing
-	$(GO) test -v ./testing $(BINARYFLAG)
+.PHONY: start
+start:
+	ADDR=$(ADDR) ./server.py --port=6543
 
 .PHONY: deps
 deps:
-	# TODO(nvanbenschoten) The following two lines are required for CI until
-	# the Azure-Agents get updated next. If you are reading this, the lines
-	# can probably be deleted now.
-	rm -rf ../../lib/pq
-	rm -rf ../../cockroachdb/cockroach-go
-	$(GO) get -d -t ./...
-	$(MAKE) deps -C ./java/hibernate
-	$(MAKE) deps -C ./python/sqlalchemy
+	# To avoid permissions errors, the following should be run in a virtualenv
+	# (preferred) or as root.
+	pip install flask-sqlalchemy cockroachdb
