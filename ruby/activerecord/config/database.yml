@@ -1,13 +1,13 @@
 default: &default
   adapter: postgresql
-  port: 26257
+  #port: 26257
   host: localhost
   #pool: 5
   #timeout: 5000
 
 development:
   <<: *default
-  database: company_development
+  database: company_activerecord
 
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".
