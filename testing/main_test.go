@@ -36,6 +36,12 @@ func (app application) dbName() string {
 	return fmt.Sprintf("company_%s", app.orm)
 }
 
+// customURLSchemes contains custom schemes for database URLs that are needed
+// for test apps that rely on a custom ORM dialect.
+var customURLSchemes = map[application]string{
+	application{language: "python", orm: "sqlalchemy"}: "cockroachdb",
+}
+
 // initTestDatabase launches a test database as a subprocess.
 func initTestDatabase(t *testing.T, app application) (*sql.DB, *url.URL, func()) {
 	ts, err := testserver.NewTestServer()
@@ -65,6 +71,9 @@ func initTestDatabase(t *testing.T, app application) (*sql.DB, *url.URL, func())
 		t.Fatal(err)
 	}
 
+	if scheme, ok := customURLSchemes[app]; ok {
+		url.Scheme = scheme
+	}
 	return db, url, func() {
 		_ = db.Close()
 		ts.Stop()
@@ -227,4 +236,8 @@ func TestGORM(t *testing.T) {
 
 func TestHibernate(t *testing.T) {
 	testORM(t, "java", "hibernate")
+}
+
+func TestSQLAlchemy(t *testing.T) {
+	testORM(t, "python", "sqlalchemy")
 }
