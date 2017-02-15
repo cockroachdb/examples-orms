@@ -3,7 +3,10 @@ package testing
 import (
 	"bytes"
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
+
+	"github.com/pkg/errors"
 
 	"github.com/cockroachdb/examples-orms/go/gorm/model"
 )
@@ -74,7 +77,15 @@ func getJSON(path string, result interface{}) error {
 		return err
 	}
 	defer resp.Body.Close()
-	return json.NewDecoder(resp.Body).Decode(result)
+	if resp.StatusCode != http.StatusOK {
+		return errors.Errorf("HTTP error %d: %s", resp.StatusCode, resp.Status)
+	}
+	bbytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	body := string(bbytes)
+	return errors.Wrapf(json.Unmarshal(bbytes, result), "getJSON(%s) : %s", path, body)
 }
 
 func postJSONData(path string, body interface{}) error {
@@ -83,8 +94,14 @@ func postJSONData(path string, body interface{}) error {
 		return err
 	}
 
-	_, err := http.Post(path, jsonContentType, &bodyBuf)
-	return err
+	resp, err := http.Post(path, jsonContentType, &bodyBuf)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return errors.Errorf("HTTP error %d: %s", resp.StatusCode, resp.Status)
+	}
+	return nil
 }
 
 // These functions clean any non-deterministic fields, such as IDs that are
