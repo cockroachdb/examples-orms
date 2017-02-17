@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"database/sql"
 	"fmt"
+	"io"
 	"log"
+	"net"
 	"net/url"
+	"os"
 	"os/exec"
 	"strings"
 	"syscall"
@@ -85,20 +88,19 @@ func initORMApp(t *testing.T, app application, dbURL *url.URL) (killFunc, restar
 
 	cmd := exec.Command(args[0], args[1:]...)
 
-	// Set up stderr so we can later verify that it's clean.
+	// Set up stderr to display to console and store in a buffer, so we can later
+	// verify that it's clean.
 	stderr := new(bytes.Buffer)
-	cmd.Stderr = stderr
+	cmd.Stderr = io.MultiWriter(stderr, os.Stderr)
 
 	// make will launch the application in a child process, and this is the most
 	// straightforward way to kill all ancestors.
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	killed := false
 	killCmd := func() {
-		if s := stderr.String(); len(s) > 0 {
-			log.Print("app error:", s)
-		}
 		if !killed {
 			syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+			waitForAppExit()
 		}
 		killed = true
 	}
@@ -111,13 +113,12 @@ func initORMApp(t *testing.T, app application, dbURL *url.URL) (killFunc, restar
 		log.Printf("process %d started: %s", cmd.Process.Pid, strings.Join(args, " "))
 	}
 
-	if err := waitForInit(); err != nil {
+	if err := waitForInit(app.language, app.orm); err != nil {
 		killCmd()
 		t.Fatalf("error waiting for http server initialization: %v stderr=%s", err, stderr.String())
 	}
 	if s := stderr.String(); len(s) > 0 {
 		killCmd()
-		t.Fatalf("stderr=%s", s)
 	}
 
 	restartCmd := func() (killFunc, restartFunc) {
@@ -129,7 +130,7 @@ func initORMApp(t *testing.T, app application, dbURL *url.URL) (killFunc, restar
 }
 
 // waitForInit retries until a connection is successfully established.
-func waitForInit() error {
+func waitForInit(language, orm string) error {
 	const maxWait = 3 * time.Minute
 	const waitDelay = 250 * time.Millisecond
 	const maxWaitLoops = int(maxWait / waitDelay)
@@ -137,13 +138,27 @@ func waitForInit() error {
 	var err error
 	var api apiHandler
 	for i := 0; i < maxWaitLoops; i++ {
-		if err = api.ping(); err == nil {
+		if err = api.ping(language + "/" + orm); err == nil {
 			return err
 		}
 		log.Printf("waitForInit: %v", err)
 		time.Sleep(waitDelay)
 	}
 	return err
+}
+
+func waitForAppExit() {
+	const waitDelay = time.Second
+	for {
+		conn, err := net.Dial("tcp", applicationAddr)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		conn.Close()
+		log.Print("waiting for app to exit")
+		time.Sleep(waitDelay)
+	}
 }
 
 func testORM(t *testing.T, language, orm string) {

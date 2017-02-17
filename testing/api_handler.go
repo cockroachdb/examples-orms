@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/pkg/errors"
 
@@ -12,12 +13,13 @@ import (
 )
 
 const (
-	applicationAddr = "http://localhost:6543"
+	applicationAddr = "localhost:6543"
+	applicationURL  = "http://" + applicationAddr
 
-	pingPath      = applicationAddr + "/ping"
-	customersPath = applicationAddr + "/customer"
-	ordersPath    = applicationAddr + "/order"
-	productsPath  = applicationAddr + "/product"
+	pingPath      = applicationURL + "/ping"
+	customersPath = applicationURL + "/customer"
+	ordersPath    = applicationURL + "/order"
+	productsPath  = applicationURL + "/product"
 
 	jsonContentType = "application/json"
 )
@@ -27,8 +29,19 @@ const (
 // across all ORMs.
 type apiHandler struct{}
 
-func (apiHandler) ping() error {
-	_, err := http.Get(pingPath)
+func (apiHandler) ping(expected string) error {
+	resp, err := http.Get(pingPath)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return errors.Errorf("HTTP error %s", resp.Status)
+	}
+	defer resp.Body.Close()
+	b, err := ioutil.ReadAll(resp.Body)
+	if body := strings.TrimSpace(string(b)); body != expected {
+		return errors.Errorf("ping response %s != expected %s", body, expected)
+	}
 	return err
 }
 
