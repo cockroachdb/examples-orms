@@ -10,7 +10,7 @@ public class PingService {
     @GET
     @Produces("text/plain")
     public String ping() {
-        return "pong";
+        return "java/hibernate";
     }
 
 }
