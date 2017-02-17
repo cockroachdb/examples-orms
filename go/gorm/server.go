@@ -45,7 +45,7 @@ func (s *Server) RegisterRouter(router *httprouter.Router) {
 }
 
 func (s *Server) ping(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	writeTextResult(w, "pong")
+	writeTextResult(w, "go/gorm")
 }
 
 func (s *Server) getCustomers(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
