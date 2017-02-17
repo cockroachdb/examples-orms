@@ -30,4 +30,4 @@ start:
 
 .PHONY: deps
 deps:
-	$(GRADLE) assemble
+	$(GRADLE) assemble --stacktrace

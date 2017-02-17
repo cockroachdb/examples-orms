@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
+	"net"
 	"net/http"
+	"strings"
 
 	"github.com/pkg/errors"
 
@@ -12,12 +14,13 @@ import (
 )
 
 const (
-	applicationAddr = "http://localhost:6543"
+	applicationAddr = "localhost:6543"
+	applicationURL  = "http://" + applicationAddr
 
-	pingPath      = applicationAddr + "/ping"
-	customersPath = applicationAddr + "/customer"
-	ordersPath    = applicationAddr + "/order"
-	productsPath  = applicationAddr + "/product"
+	pingPath      = applicationURL + "/ping"
+	customersPath = applicationURL + "/customer"
+	ordersPath    = applicationURL + "/order"
+	productsPath  = applicationURL + "/product"
 
 	jsonContentType = "application/json"
 )
@@ -27,8 +30,28 @@ const (
 // across all ORMs.
 type apiHandler struct{}
 
-func (apiHandler) ping() error {
-	_, err := http.Get(pingPath)
+func (apiHandler) canDial() bool {
+	conn, err := net.Dial("tcp", applicationAddr)
+	if err != nil {
+		return false
+	}
+	conn.Close()
+	return true
+}
+
+func (apiHandler) ping(app application) error {
+	resp, err := http.Get(pingPath)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return errors.Errorf("HTTP error %s", resp.Status)
+	}
+	b, err := ioutil.ReadAll(resp.Body)
+	if body, name := strings.TrimSpace(string(b)), app.name(); body != name {
+		return errors.Errorf("ping response %s != expected %s", body, name)
+	}
 	return err
 }
 
