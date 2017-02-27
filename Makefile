@@ -16,6 +16,7 @@
 # Author: Nathan VanBenschoten (nvanbenschoten@gmail.com)
 
 GO ?= go
+POSTGRES_TEST_TAG ?= 20170227-1358
 
 .PHONY: all
 all: test
@@ -28,6 +29,12 @@ endif
 test:
 	$(GO) test -v -i ./testing
 	$(GO) test -v ./testing $(BINARYFLAG)
+
+.PHONY: dockertest
+dockertest:
+	docker run --volume="$(shell pwd)":/examples-orms \
+		"cockroachdb/postgres-test:$(POSTGRES_TEST_TAG)" \
+		make -C /examples-orms deps test
 
 .PHONY: deps
 deps:
