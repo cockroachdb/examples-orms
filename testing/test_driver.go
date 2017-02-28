@@ -56,11 +56,21 @@ func (td testDriver) TestGeneratedTables(t *testing.T) {
 		productsTable,
 	}
 
-	td.queryAndAssert(t, exp, `
+	actual := make(map[string]interface{}, len(exp))
+	tables := td.query(t, `
 SELECT table_name
-FROM information_schema.tables 
-WHERE table_schema = $1 
+FROM information_schema.tables
+WHERE table_schema = $1
 ORDER BY 1`, td.dbName)
+	for i := range tables {
+		actual[tables[i]] = nil
+	}
+
+	for i := range exp {
+		if _, ok := actual[exp[i]]; !ok {
+			t.Fatalf("table %s is missing from generated schema", exp[i])
+		}
+	}
 }
 
 func (td testDriver) TestGeneratedCustomersTableColumns(t *testing.T) {
@@ -235,7 +245,7 @@ func (td testDriver) queryIDs(t *testing.T, table string) ([]int, error) {
 	return ids, nil
 }
 
-func (td testDriver) queryAndAssert(t *testing.T, expected []string, query string, args ...interface{}) {
+func (td testDriver) query(t *testing.T, query string, args ...interface{}) []string {
 	rows, err := td.db.Query(query, args...)
 	if err != nil {
 		t.Fatal(err)
@@ -245,6 +255,11 @@ func (td testDriver) queryAndAssert(t *testing.T, expected []string, query strin
 	if err != nil {
 		t.Fatal(err)
 	}
+	return found
+}
+
+func (td testDriver) queryAndAssert(t *testing.T, expected []string, query string, args ...interface{}) {
+	found := td.query(t, query, args...)
 
 	if !reflect.DeepEqual(expected, found) {
 		t.Fatalf("expecting rows for query %q with args %+v to be %v, found %v", query, args, expected, found)
