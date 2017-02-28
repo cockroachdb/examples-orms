@@ -17,6 +17,8 @@
 
 GO ?= go
 POSTGRES_TEST_TAG ?= 20170227-1358
+EXAMPLES_ORMS_PATH = /examples-orms
+DOCKER = docker run --volume="$(shell pwd)":/examples-orms cockroachdb/postgres-test:$(POSTGRES_TEST_TAG)
 
 .PHONY: all
 all: test
@@ -32,9 +34,14 @@ test:
 
 .PHONY: dockertest
 dockertest:
-	docker run --volume="$(shell pwd)":/examples-orms \
-		"cockroachdb/postgres-test:$(POSTGRES_TEST_TAG)" \
-		make -C /examples-orms deps test
+		$(DOCKER) make -C $(EXAMPLES_ORMS_PATH) deps test
+
+# Run `git clean` in Docker to remove leftover files that are owned by root.
+# This must be run after `dockertest` to ensure that successive CI runs don't
+# fail.
+.PHONY: dockergitclean
+dockergitclean:
+		$(DOCKER) /bin/bash -c "cd $(EXAMPLES_ORMS_PATH) && git clean -f -d -x ."
 
 .PHONY: deps
 deps:
