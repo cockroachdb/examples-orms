@@ -120,9 +120,6 @@ func initORMApp(t *testing.T, app application, dbURL *url.URL) (killFunc, restar
 		killCmd()
 		t.Fatalf("error waiting for http server initialization: %v stderr=%s", err, stderr.String())
 	}
-	if s := stderr.String(); len(s) > 0 {
-		killCmd()
-	}
 
 	restartCmd := func() (killFunc, restartFunc) {
 		killCmd()
