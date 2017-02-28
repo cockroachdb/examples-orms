@@ -1,5 +1,8 @@
 package com.cockroachlabs.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -17,6 +20,7 @@ public class Product {
     private String name;
 
     @Column(name="price", precision=18, scale=2)
+    @JsonSerialize(using = ToStringSerializer.class)
     private BigDecimal price;
 
     @ManyToMany(cascade=CascadeType.ALL, mappedBy="products")

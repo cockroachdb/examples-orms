@@ -1,5 +1,8 @@
 package com.cockroachlabs.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -14,6 +17,7 @@ public class Order {
     private long id;
 
     @Column(name="subtotal", precision=18, scale=2)
+    @JsonSerialize(using = ToStringSerializer.class)
     private BigDecimal subtotal;
 
     @ManyToOne

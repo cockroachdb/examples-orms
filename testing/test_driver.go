@@ -23,8 +23,8 @@ var (
 	customerName1 = "Billy"
 
 	productName1       = "Ice Cream"
-	productPrice1      = "123.4"
-	productPrice1Float = 123.4
+	productPrice1      = "123.40"
+	productPrice1Float = 123.40
 )
 
 // parallelTestGroup maps a set of names to test functions, and will run each
@@ -184,7 +184,7 @@ func (td testDriver) TestCreateOrder(t *testing.T) {
 	if err := td.api.createOrder(customerID, productID, productPrice1Float); err != nil {
 		t.Fatalf("error creating order: %v", err)
 	}
-	td.queryAndAssert(t, []string{row(productPrice1Float)}, fmt.Sprintf(`SELECT subtotal FROM %s`, ordersTable))
+	td.queryAndAssert(t, []string{row(productPrice1)}, fmt.Sprintf(`SELECT subtotal FROM %s`, ordersTable))
 }
 
 func (td testDriver) TestRetrieveCustomerAfterCreation(t *testing.T) {

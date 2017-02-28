@@ -9,7 +9,7 @@ type Customer struct {
 // Order is a model in the "orders" table.
 type Order struct {
 	ID       int     `json:"id,omitempty"`
-	Subtotal float64 `json:"subtotal" gorm:"type:decimal(18,2)"`
+	Subtotal float64 `json:"subtotal,string" gorm:"type:decimal(18,2)"`
 
 	Customer   Customer `json:"customer" gorm:"ForeignKey:CustomerID"`
 	CustomerID int      `json:"-"`
@@ -21,5 +21,5 @@ type Order struct {
 type Product struct {
 	ID    int     `json:"id,omitempty"`
 	Name  *string `json:"name"  gorm:"not null;unique"`
-	Price float64 `json:"price" gorm:"type:decimal(18,2)"`
+	Price float64 `json:"price,string" gorm:"type:decimal(18,2)"`
 }
