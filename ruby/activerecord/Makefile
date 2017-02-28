@@ -15,11 +15,15 @@
 #
 # Author: Nathan VanBenschoten (nvanbenschoten@gmail.com)
 
+# ADDR will be something like postgres://localhost:26257/company_activerecord.
+# We need to change the protocol name to cockroachdb so Rails uses our adapter.
+URL := $(subst postgresql,cockroachdb,$(ADDR))
+
 .PHONY: start
 start:
-	@DATABASE_URL="$(ADDR)" rake db:migrate
-	@DATABASE_URL="$(ADDR)" PORT=6543 rails server
+	@DATABASE_URL="$(URL)" rbenv exec rake db:migrate
+	@DATABASE_URL="$(URL)" PORT=6543 rbenv exec rails server
 
 .PHONY: deps
 deps:
-	@bundle install
+	@rbenv exec bundle install

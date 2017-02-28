@@ -16,7 +16,7 @@
 # Author: Nathan VanBenschoten (nvanbenschoten@gmail.com)
 
 GO ?= go
-POSTGRES_TEST_TAG ?= 20170227-1358
+POSTGRES_TEST_TAG ?= 20170308-0001
 EXAMPLES_ORMS_PATH = /examples-orms
 DOCKER = docker run --volume="$(shell pwd)":/examples-orms cockroachdb/postgres-test:$(POSTGRES_TEST_TAG)
 
