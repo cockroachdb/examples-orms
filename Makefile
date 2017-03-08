@@ -18,7 +18,7 @@
 GO ?= go
 POSTGRES_TEST_TAG ?= 20170227-1358
 EXAMPLES_ORMS_PATH = /examples-orms
-DOCKER = docker run --volume="$(shell pwd)":/examples-orms cockroachdb/postgres-test:$(POSTGRES_TEST_TAG)
+DOCKER = docker run --volume="$(shell pwd)":/examples-orms docker.io/cockroachdb/postgres-test:$(POSTGRES_TEST_TAG)
 
 .PHONY: all
 all: test
