@@ -18,7 +18,7 @@
 GO ?= go
 POSTGRES_TEST_TAG ?= 20170227-1358
 EXAMPLES_ORMS_PATH = /examples-orms
-DOCKER = docker run --volume="$(shell pwd)":/examples-orms cockroachdb/postgres-test:$(POSTGRES_TEST_TAG)
+DOCKER = docker run --volume="$(shell pwd)":$(EXAMPLES_ORMS_PATH) docker.io/cockroachdb/postgres-test:$(POSTGRES_TEST_TAG)
 
 .PHONY: all
 all: test
@@ -45,10 +45,5 @@ dockergitclean:
 
 .PHONY: deps
 deps:
-	# TODO(nvanbenschoten) The following two lines are required for CI until
-	# the Azure-Agents get updated next. If you are reading this, the lines
-	# can probably be deleted now.
-	rm -rf ../../lib/pq
-	rm -rf ../../cockroachdb/cockroach-go
 	$(GO) get -d -t ./...
 	$(MAKE) deps -C ./java/hibernate
