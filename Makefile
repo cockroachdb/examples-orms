@@ -1,4 +1,4 @@
-# Copyright 2016 The Cockroach Authors.
+# Copyright 2017 The Cockroach Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -47,3 +47,4 @@ dockergitclean:
 deps:
 	$(GO) get -d -t ./...
 	$(MAKE) deps -C ./java/hibernate
+	$(MAKE) deps -C ./python/sqlalchemy
