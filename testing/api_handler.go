@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"strings"
 
@@ -28,6 +29,15 @@ const (
 // for convenient JSON marshalling/unmarshalling, but this format should be the same
 // across all ORMs.
 type apiHandler struct{}
+
+func (apiHandler) canDial() bool {
+	conn, err := net.Dial("tcp", applicationAddr)
+	if err != nil {
+		return false
+	}
+	conn.Close()
+	return true
+}
 
 func (apiHandler) ping(expected string) error {
 	resp, err := http.Get(pingPath)
