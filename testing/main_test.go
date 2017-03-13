@@ -90,6 +90,18 @@ func initORMApp(app application, dbURL *url.URL) (func() error, error) {
 		if err := cmd.Wait(); err.Error() != "signal: "+syscall.SIGKILL.String() {
 			return err
 		}
+
+		// Killing a process is not instant. For example, with the Hibernate server,
+		// it often takes ~10 seconds for the listen port to become available after
+		// this function is called.
+		for {
+			if !(apiHandler{}).canDial() {
+				break
+			}
+			log.Printf("waiting for app server port to become available")
+			time.Sleep(time.Second)
+		}
+
 		return nil
 	}
 
