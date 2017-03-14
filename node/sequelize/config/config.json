@@ -1,0 +1,28 @@
+{
+  "development": {
+    "username": "root",
+    "password": null,
+    "database": "company_sequelize",
+    "host": "127.0.0.1",
+    "port": "26257",
+    "dialect": "postgres",
+    "keepDefaultTimezone": true,
+    "databaseVersion": "9.6.0"
+  },
+  "test": {
+    "username": "root",
+    "password": null,
+    "database": "company_sequelize",
+    "host": "127.0.0.1",
+    "port": "26257",
+    "dialect": "postgres"
+  },
+  "production": {
+    "username": "root",
+    "password": null,
+    "database": "company_sequelize",
+    "host": "127.0.0.1",
+    "port": "26257",
+    "dialect": "postgres"
+  }
+}

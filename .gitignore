@@ -22,3 +22,9 @@ _testmain.go
 *.exe
 *.test
 *.prof
+
+node_modules
+npm-debug.log
+
+*.pyc
+python/sqlalchemy/env
