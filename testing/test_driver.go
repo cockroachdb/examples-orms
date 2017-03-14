@@ -92,8 +92,8 @@ func (td testDriver) TestGeneratedOrderProductsTableColumns(t *testing.T) {
 func (td testDriver) testGeneratedColumnsForTable(t *testing.T, table string, columns []string) {
 	td.queryAndAssert(t, columns, `
 SELECT column_name
-FROM information_schema.columns 
-WHERE table_schema = $1 AND table_name = $2 
+FROM information_schema.columns
+WHERE table_schema = $1 AND table_name = $2
 ORDER BY 1`, td.dbName, table)
 }
 

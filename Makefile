@@ -48,3 +48,4 @@ deps:
 	$(GO) get -d -t ./...
 	$(MAKE) deps -C ./java/hibernate
 	$(MAKE) deps -C ./python/sqlalchemy
+	$(MAKE) deps -C ./node/sequelize

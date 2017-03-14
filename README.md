@@ -118,7 +118,7 @@ GET    /product
     curl http://localhost:6543/customer
 
 GET    /product/:id
-    curl http://localhost:6543/customer/1
+    curl http://localhost:6543/product/1
 
 POST   /product
     curl -X POST -d '{"id": 1, "name": "apple", "price": 0.30}' http://localhost:6543/product

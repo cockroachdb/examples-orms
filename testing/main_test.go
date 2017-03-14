@@ -241,3 +241,7 @@ func TestHibernate(t *testing.T) {
 func TestSQLAlchemy(t *testing.T) {
 	testORM(t, "python", "sqlalchemy")
 }
+
+func TestSequelize(t *testing.T) {
+	testORM(t, "node", "sequelize")
+}
