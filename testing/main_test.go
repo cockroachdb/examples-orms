@@ -39,7 +39,7 @@ func (app application) dbName() string {
 // customURLSchemes contains custom schemes for database URLs that are needed
 // for test apps that rely on a custom ORM dialect.
 var customURLSchemes = map[application]string{
-	application{language: "python", orm: "sqlalchemy"}: "cockroachdb",
+	{language: "python", orm: "sqlalchemy"}: "cockroachdb",
 }
 
 // initTestDatabase launches a test database as a subprocess.
@@ -238,10 +238,14 @@ func TestHibernate(t *testing.T) {
 	testORM(t, "java", "hibernate")
 }
 
+func TestSequelize(t *testing.T) {
+	testORM(t, "node", "sequelize")
+}
+
 func TestSQLAlchemy(t *testing.T) {
 	testORM(t, "python", "sqlalchemy")
 }
 
-func TestSequelize(t *testing.T) {
-	testORM(t, "node", "sequelize")
+func TestActiveRecord(t *testing.T) {
+	testORM(t, "ruby", "activerecord")
 }

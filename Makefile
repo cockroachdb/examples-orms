@@ -16,7 +16,7 @@
 # Author: Nathan VanBenschoten (nvanbenschoten@gmail.com)
 
 GO ?= go
-POSTGRES_TEST_TAG ?= 20170227-1358
+POSTGRES_TEST_TAG ?= 20170308-1644
 EXAMPLES_ORMS_PATH = /examples-orms
 DOCKER = docker run --volume="$(shell pwd)":$(EXAMPLES_ORMS_PATH) docker.io/cockroachdb/postgres-test:$(POSTGRES_TEST_TAG)
 
@@ -47,5 +47,6 @@ dockergitclean:
 deps:
 	$(GO) get -d -t ./...
 	$(MAKE) deps -C ./java/hibernate
-	$(MAKE) deps -C ./python/sqlalchemy
 	$(MAKE) deps -C ./node/sequelize
+	$(MAKE) deps -C ./python/sqlalchemy
+	$(MAKE) deps -C ./ruby/activerecord
