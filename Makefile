@@ -17,8 +17,12 @@
 
 GO ?= go
 POSTGRES_TEST_TAG ?= 20170308-1644
-EXAMPLES_ORMS_PATH = /examples-orms
-DOCKER = docker run --volume="$(shell pwd)":$(EXAMPLES_ORMS_PATH) docker.io/cockroachdb/postgres-test:$(POSTGRES_TEST_TAG)
+EXAMPLES_ORMS_PATH = /root/go
+DOCKER = docker run --volume="$(shell pwd)/../../../..":$(EXAMPLES_ORMS_PATH) docker.io/cockroachdb/postgres-test:$(POSTGRES_TEST_TAG)
+#                                          ^  ^  ^  ^~ GOPATH
+#                                          |  |  |~ GOPATH/src
+#                                          |  |~ GOPATH/src/github.com
+#                                          |~ GOPATH/src/github.com/cockroachdb
 
 .PHONY: all
 all: test
@@ -33,19 +37,25 @@ test:
 	$(GO) test -v ./testing $(BINARYFLAG)
 
 .PHONY: dockertest
-dockertest:
-		$(DOCKER) make -C $(EXAMPLES_ORMS_PATH) deps test
+dockertest: godeps
+		$(DOCKER) make -C $(EXAMPLES_ORMS_PATH)/src/github.com/cockroachdb/examples-orms ormdeps test
 
 # Run `git clean` in Docker to remove leftover files that are owned by root.
 # This must be run after `dockertest` to ensure that successive CI runs don't
 # fail.
 .PHONY: dockergitclean
 dockergitclean:
-		$(DOCKER) /bin/bash -c "cd $(EXAMPLES_ORMS_PATH) && git clean -f -d -x ."
+		$(DOCKER) /bin/bash -c "cd $(EXAMPLES_ORMS_PATH)/src/github.com/cockroachdb/examples-orms && git clean -f -d -x ."
 
 .PHONY: deps
-deps:
-	$(GO) get -d -t ./...
+deps: godeps ormdeps
+
+.PHONY: godeps
+godeps:
+	$(GO) get -d -u -t ./...
+
+.PHONY: ormdeps
+ormdeps:
 	$(MAKE) deps -C ./java/hibernate
 	$(MAKE) deps -C ./node/sequelize
 	$(MAKE) deps -C ./python/sqlalchemy
