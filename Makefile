@@ -26,6 +26,7 @@ all: test
 
 ifneq ($(COCKROACH_BINARY),)
 BINARYFLAG = -cockroach-binary=$(COCKROACH_BINARY)
+DOCKERFLAG = COCKROACH_BINARY=$(COCKROACH_BINARY)
 endif
 
 .PHONY: test
@@ -35,7 +36,7 @@ test:
 
 .PHONY: dockertest
 dockertest: godeps
-		$(DOCKER) make -C $(DOCKER_REPO_PATH) ormdeps test
+		$(DOCKER) make -C $(DOCKER_REPO_PATH) ormdeps test $(DOCKERFLAG)
 
 # Run `git clean` in Docker to remove leftover files that are owned by root.
 # This must be run after `dockertest` to ensure that successive CI runs don't
