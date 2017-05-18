@@ -16,10 +16,6 @@
 # Author: Nathan VanBenschoten (nvanbenschoten@gmail.com)
 
 GO ?= go
-POSTGRES_TEST_TAG ?= 20170308-1644
-DOCKER_GOPATH = /root/go
-DOCKER_REPO_PATH = $(DOCKER_GOPATH)/src/github.com/cockroachdb/examples-orms
-DOCKER = docker run --volume="$(shell go env GOPATH | cut -f1 -d:)/src":$(DOCKER_GOPATH)/src docker.io/cockroachdb/postgres-test:$(POSTGRES_TEST_TAG)
 
 .PHONY: all
 all: test
@@ -36,14 +32,7 @@ test:
 
 .PHONY: dockertest
 dockertest: godeps
-		$(DOCKER) make -C $(DOCKER_REPO_PATH) ormdeps test $(DOCKERFLAG)
-
-# Run `git clean` in Docker to remove leftover files that are owned by root.
-# This must be run after `dockertest` to ensure that successive CI runs don't
-# fail.
-.PHONY: dockergitclean
-dockergitclean:
-		$(DOCKER) /bin/bash -c "cd $(DOCKER_REPO_PATH) && git clean -f -d -x ."
+	./docker.sh make ormdeps test $(DOCKERFLAG)
 
 .PHONY: deps
 deps: godeps ormdeps
