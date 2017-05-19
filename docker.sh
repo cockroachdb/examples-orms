@@ -40,7 +40,7 @@ repo_root=$(cd "$(dirname "${0}")" && pwd)
 username=$(id -un)
 uid_gid=$(id -u):$(id -g)
 container_root=${repo_root}/docker_root
-mkdir -p "${container_root}"/{etc,home}
+mkdir -p "${container_root}"/{etc,home,home/"${username}"/go/src}
 echo "${username}:x:${uid_gid}::/home/${username}:/bin/bash" > "${container_root}/etc/passwd"
 
 exec docker run \
