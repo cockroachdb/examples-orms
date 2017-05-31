@@ -1,4 +1,5 @@
 class CreateSchema < ActiveRecord::Migration
+  disable_ddl_transaction!
   def change
     create_table :customers do |t|
       t.string :name, null: false
