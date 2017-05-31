@@ -20,16 +20,13 @@ ActiveRecord::Schema.define(version: 20170207160810) do
     t.bigint "order_id",   null: false
     t.bigint "product_id", null: false
     t.index ["order_id"], name: "index_order_products_on_order_id"
-    t.index ["order_id"], name: "order_products_auto_index_fk_rails_f40b8ccee4"
     t.index ["product_id"], name: "index_order_products_on_product_id"
-    t.index ["product_id"], name: "order_products_auto_index_fk_rails_96c0709f78"
   end
 
   create_table "orders", id: :bigint, default: -> { "unique_rowid()" }, force: :cascade do |t|
     t.decimal "subtotal",    null: false
     t.bigint  "customer_id", null: false
     t.index ["customer_id"], name: "index_orders_on_customer_id"
-    t.index ["customer_id"], name: "orders_auto_index_fk_rails_3dad120da9"
   end
 
   create_table "products", id: :bigint, default: -> { "unique_rowid()" }, force: :cascade do |t|
