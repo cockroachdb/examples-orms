@@ -16,6 +16,7 @@
 # Author: Nathan VanBenschoten (nvanbenschoten@gmail.com)
 
 GO ?= go
+TESTS := .
 
 .PHONY: all
 all: test
@@ -28,7 +29,7 @@ endif
 .PHONY: test
 test:
 	$(GO) test -v -i ./testing
-	$(GO) test -v ./testing $(BINARYFLAG)
+	$(GO) test -v -run "$(TESTS)" ./testing $(BINARYFLAG)
 
 .PHONY: dockertest
 dockertest: godeps
