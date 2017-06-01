@@ -32,18 +32,11 @@ test:
 	$(GO) test -v -run "$(TESTS)" ./testing $(BINARYFLAG)
 
 .PHONY: dockertest
-dockertest: godeps
-	./docker.sh make ormdeps test $(DOCKERFLAG)
+dockertest:
+	./docker.sh make deps test $(DOCKERFLAG)
 
 .PHONY: deps
-deps: godeps ormdeps
-
-.PHONY: godeps
-godeps:
-	$(GO) get -d -u -t ./...
-
-.PHONY: ormdeps
-ormdeps:
+deps:
 	$(MAKE) deps -C ./java/hibernate
 	$(MAKE) deps -C ./node/sequelize
 	$(MAKE) deps -C ./python/sqlalchemy
