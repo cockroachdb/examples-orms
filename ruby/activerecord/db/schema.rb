@@ -17,20 +17,20 @@ ActiveRecord::Schema.define(version: 20170207160810) do
   end
 
   create_table "order_products", id: false, force: :cascade do |t|
-    t.bigint "order_id",   null: false
+    t.bigint "order_id", null: false
     t.bigint "product_id", null: false
     t.index ["order_id"], name: "index_order_products_on_order_id"
     t.index ["product_id"], name: "index_order_products_on_product_id"
   end
 
   create_table "orders", id: :bigint, default: -> { "unique_rowid()" }, force: :cascade do |t|
-    t.decimal "subtotal",    null: false
-    t.bigint  "customer_id", null: false
+    t.decimal "subtotal", null: false
+    t.bigint "customer_id", null: false
     t.index ["customer_id"], name: "index_orders_on_customer_id"
   end
 
   create_table "products", id: :bigint, default: -> { "unique_rowid()" }, force: :cascade do |t|
-    t.text    "name",  null: false
+    t.text "name", null: false
     t.decimal "price", null: false
   end
 

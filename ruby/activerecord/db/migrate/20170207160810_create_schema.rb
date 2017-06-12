@@ -1,4 +1,4 @@
-class CreateSchema < ActiveRecord::Migration
+class CreateSchema < ActiveRecord::Migration[5.1]
   disable_ddl_transaction!
   def change
     create_table :customers do |t|
