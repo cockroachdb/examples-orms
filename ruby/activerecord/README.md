@@ -1,24 +1,14 @@
 # README
+This is a sample Rails 5.1 app that uses CockroachDB. It implements the
+REST API documented in the toplevel README of this repository.
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+To run the database migrations and app, ensure you have a CockroachDB instance
+running on localhost:26257. Then, do the following:
 
-Things you may want to cover:
-
-* Ruby version
-
-* System dependencies
-
-* Configuration
-
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+```
+bundle install
+rake db:create
+rake db:migrate
+rails server
+curl http://localhost:3000/customer
+```
