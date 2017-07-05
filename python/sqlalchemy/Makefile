@@ -14,10 +14,11 @@
 # for names of contributors.
 
 ADDR ?= cockroachdb://root@localhost:26257/company_sqlalchemy?sslmode=disable
+APPSERVER_PORT ?= 6543
 
 .PHONY: start
 start:
-	ADDR=$(ADDR) ./server.py --port=6543
+	ADDR=$(ADDR) ./server.py --port=$(APPSERVER_PORT)
 
 .PHONY: deps
 deps:

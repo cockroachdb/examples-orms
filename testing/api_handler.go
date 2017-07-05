@@ -3,6 +3,7 @@ package testing
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -14,24 +15,35 @@ import (
 )
 
 const (
-	applicationAddr = "localhost:6543"
-	applicationURL  = "http://" + applicationAddr
-
-	pingPath      = applicationURL + "/ping"
-	customersPath = applicationURL + "/customer"
-	ordersPath    = applicationURL + "/order"
-	productsPath  = applicationURL + "/product"
-
 	jsonContentType = "application/json"
 )
 
 // apiHandler takes care of communicating with the application api. It uses GORM's models
 // for convenient JSON marshalling/unmarshalling, but this format should be the same
 // across all ORMs.
-type apiHandler struct{}
+type apiHandler struct {
+	applicationAddr string
+	applicationURL  string
 
-func (apiHandler) canDial() bool {
-	conn, err := net.Dial("tcp", applicationAddr)
+	pingPath      string
+	customersPath string
+	ordersPath    string
+	productsPath  string
+}
+
+func makeApiHandler(port int) apiHandler {
+	a := apiHandler{}
+	a.applicationAddr = fmt.Sprintf("localhost:%d", port)
+	a.applicationURL = "http://" + a.applicationAddr
+	a.pingPath = a.applicationURL + "/ping"
+	a.customersPath = a.applicationURL + "/customer"
+	a.ordersPath = a.applicationURL + "/order"
+	a.productsPath = a.applicationURL + "/product"
+	return a
+}
+
+func (a apiHandler) canDial() bool {
+	conn, err := net.Dial("tcp", a.applicationAddr)
 	if err != nil {
 		return false
 	}
@@ -39,8 +51,8 @@ func (apiHandler) canDial() bool {
 	return true
 }
 
-func (apiHandler) ping(expected string) error {
-	resp, err := http.Get(pingPath)
+func (a apiHandler) ping(expected string) error {
+	resp, err := http.Get(a.pingPath)
 	if err != nil {
 		return err
 	}
@@ -55,43 +67,43 @@ func (apiHandler) ping(expected string) error {
 	return err
 }
 
-func (apiHandler) queryCustomers() ([]model.Customer, error) {
+func (a apiHandler) queryCustomers() ([]model.Customer, error) {
 	var customers []model.Customer
-	if err := getJSON(customersPath, &customers); err != nil {
+	if err := getJSON(a.customersPath, &customers); err != nil {
 		return nil, err
 	}
 	return customers, nil
 }
-func (apiHandler) queryProducts() ([]model.Product, error) {
+func (a apiHandler) queryProducts() ([]model.Product, error) {
 	var products []model.Product
-	if err := getJSON(productsPath, &products); err != nil {
+	if err := getJSON(a.productsPath, &products); err != nil {
 		return nil, err
 	}
 	return products, nil
 }
-func (apiHandler) queryOrders() ([]model.Order, error) {
+func (a apiHandler) queryOrders() ([]model.Order, error) {
 	var orders []model.Order
-	if err := getJSON(ordersPath, &orders); err != nil {
+	if err := getJSON(a.ordersPath, &orders); err != nil {
 		return nil, err
 	}
 	return orders, nil
 }
 
-func (apiHandler) createCustomer(name string) error {
+func (a apiHandler) createCustomer(name string) error {
 	customer := model.Customer{Name: &name}
-	return postJSONData(customersPath, customer)
+	return postJSONData(a.customersPath, customer)
 }
-func (apiHandler) createProduct(name string, price float64) error {
+func (a apiHandler) createProduct(name string, price float64) error {
 	product := model.Product{Name: &name, Price: price}
-	return postJSONData(productsPath, product)
+	return postJSONData(a.productsPath, product)
 }
-func (apiHandler) createOrder(customerID, productID int, subtotal float64) error {
+func (a apiHandler) createOrder(customerID, productID int, subtotal float64) error {
 	order := model.Order{
 		Customer: model.Customer{ID: customerID},
 		Products: []model.Product{{ID: productID}},
 		Subtotal: subtotal,
 	}
-	return postJSONData(ordersPath, order)
+	return postJSONData(a.ordersPath, order)
 }
 
 func getJSON(path string, result interface{}) error {

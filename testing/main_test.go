@@ -2,8 +2,10 @@ package testing
 
 import (
 	"database/sql"
+	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/url"
 	"os"
 	"os/exec"
@@ -15,6 +17,13 @@ import (
 
 	// Import postgres driver.
 	_ "github.com/lib/pq"
+)
+
+var (
+	// The port on which the appserver will run. Set to 0 to assign a port
+	// randomly, for tests that support taking the port as a make argument. This
+	// randomized behaviour is useful for stress testing.
+	appServerPort = flag.Int("appserver_port", 6543, "the address of the app server")
 )
 
 // application represents a single instance of an application running an ORM and
@@ -82,8 +91,11 @@ func initTestDatabase(t *testing.T, app application) (*sql.DB, *url.URL, func())
 
 // initORMApp launches an ORM application as a subprocess and returns a
 // function that terminates that process.
-func initORMApp(app application, dbURL *url.URL) (func() error, error) {
-	cmd := exec.Command("make", "start", "-C", app.dir(), "ADDR="+dbURL.String())
+func initORMApp(app application, dbURL *url.URL, appServerPort int) (func() error, error) {
+	cmd := exec.Command(
+		"make", "start", "-C", app.dir(), "ADDR="+dbURL.String(),
+		fmt.Sprintf("APPSERVER_PORT=%d", appServerPort),
+	)
 	cmd.Stdout = os.Stderr
 	cmd.Stderr = os.Stderr
 
@@ -91,6 +103,7 @@ func initORMApp(app application, dbURL *url.URL) (func() error, error) {
 	// straightforward way to kill all ancestors.
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
+	api := makeApiHandler(appServerPort)
 	killCmd := func() error {
 		if err := syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL); err != nil {
 			return err
@@ -105,7 +118,7 @@ func initORMApp(app application, dbURL *url.URL) (func() error, error) {
 		// this function is called. This is despite the above code that issues a
 		// SIGKILL to the process group for the test server.
 		for {
-			if !(apiHandler{}).canDial() {
+			if !api.canDial() {
 				break
 			}
 			log.Printf("waiting for app server port to become available")
@@ -123,10 +136,12 @@ func initORMApp(app application, dbURL *url.URL) (func() error, error) {
 	const waitDelay = 250 * time.Millisecond
 
 	for waited := time.Duration(0); ; waited += waitDelay {
+		fmt.Printf("test looping. command %s status: %s\n", cmd.Args, cmd.ProcessState)
+
 		if processState := cmd.ProcessState; processState != nil && processState.Exited() {
 			return nil, fmt.Errorf("command %s exited: %v", cmd.Args, cmd.Wait())
 		}
-		if err := (apiHandler{}).ping(app.name()); err != nil {
+		if err := api.ping(app.name()); err != nil {
 			if waited > maxWait {
 				if err := killCmd(); err != nil {
 					log.Printf("failed to kill command %s with PID %d: %s", cmd.Args, cmd.ProcessState.Pid(), err)
@@ -140,7 +155,12 @@ func initORMApp(app application, dbURL *url.URL) (func() error, error) {
 	}
 }
 
-func testORM(t *testing.T, language, orm string) {
+func testORM(t *testing.T, language, orm string, appServerPort int) {
+	if appServerPort == 0 {
+		rand.Seed(time.Now().UTC().UnixNano())
+		appServerPort = 10000 + rand.Intn(30000)
+	}
+
 	app := application{
 		language: language,
 		orm:      orm,
@@ -152,10 +172,11 @@ func testORM(t *testing.T, language, orm string) {
 	td := testDriver{
 		db:     db,
 		dbName: app.dbName(),
+		api:    makeApiHandler(appServerPort),
 	}
 
 	t.Run("FirstRun", func(t *testing.T) {
-		stopApp, err := initORMApp(app, dbURL)
+		stopApp, err := initORMApp(app, dbURL, appServerPort)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -211,7 +232,7 @@ func testORM(t *testing.T, language, orm string) {
 	})
 
 	t.Run("SecondRun", func(t *testing.T) {
-		stopApp, err := initORMApp(app, dbURL)
+		stopApp, err := initORMApp(app, dbURL, appServerPort)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -231,21 +252,21 @@ func testORM(t *testing.T, language, orm string) {
 }
 
 func TestGORM(t *testing.T) {
-	testORM(t, "go", "gorm")
+	testORM(t, "go", "gorm", *appServerPort)
 }
 
 func TestHibernate(t *testing.T) {
-	testORM(t, "java", "hibernate")
+	testORM(t, "java", "hibernate", *appServerPort)
 }
 
 func TestSequelize(t *testing.T) {
-	testORM(t, "node", "sequelize")
+	testORM(t, "node", "sequelize", *appServerPort)
 }
 
 func TestSQLAlchemy(t *testing.T) {
-	testORM(t, "python", "sqlalchemy")
+	testORM(t, "python", "sqlalchemy", *appServerPort)
 }
 
 func TestActiveRecord(t *testing.T) {
-	testORM(t, "ruby", "activerecord")
+	testORM(t, "ruby", "activerecord", *appServerPort)
 }
