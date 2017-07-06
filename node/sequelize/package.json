@@ -8,6 +8,7 @@
   "dependencies": {
     "body-parser": "~1.15.2",
     "express": "~4.14.0",
+    "sequelize": "^3.30.4",
     "sequelize-cockroachdb": "^1.0.0"
   }
 }
