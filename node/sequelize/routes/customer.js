@@ -5,9 +5,7 @@ var router = express.Router();
 // GET all customers.
 router.get('/', function(req, res, next) {
   models.Customer.findAll().then(function(customers) {
-    var result = customers.map(function(customer) {
-      return models.customerToJSON(customer);
-    });
+    var result = customers.map(function(customer) { return customer.jsonObject(); });
     res.json(result);
   }).catch(next);
 });
@@ -16,7 +14,7 @@ router.get('/', function(req, res, next) {
 router.post('/', function(req, res, next) {
   var c = {id: req.body.id, name: req.body.name};
   models.Customer.create(c).then(function(customer) {
-    res.json(models.customerToJSON(customer));
+    res.json(customer.jsonObject());
   }).catch(next);
 });
 
@@ -24,7 +22,7 @@ router.post('/', function(req, res, next) {
 router.get('/:id', function(req, res, next) {
   var id = parseInt(req.params.id);
   models.Customer.findById(id).then(function(customer) {
-    res.json(models.customerToJSON(customer));
+    res.json(customer.jsonObject());
   }).catch(next);
 });
 
