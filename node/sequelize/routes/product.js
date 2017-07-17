@@ -5,7 +5,9 @@ var router = express.Router();
 // GET all products from database.
 router.get('/', function(req, res, next) {
   models.Product.findAll().then(function(products) {
-    var result = products.map(function(product) { return product.jsonObject(); });
+    var result = products.map(function(product) {
+      return models.productToJSON(product);
+    });
     res.json(result);
   }).catch(next);
 });
@@ -19,7 +21,7 @@ router.post('/', function(req, res, next) {
     price: parseFloat(req.body.price)
   };
   models.Product.create(p).then(function(product) {
-    res.json(product.jsonObject());
+    res.json(models.productToJSON(product));
   }).catch(next);
 });
 
@@ -27,7 +29,7 @@ router.post('/', function(req, res, next) {
 router.get('/:id', function(req, res, next) {
   var id = parseInt(req.params.id);
   models.Product.findById(id).then(function(product) {
-    res.json(product.jsonObject());
+    res.json(models.productToJSON(product));
   }).catch(next);
 });
 
