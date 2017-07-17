@@ -5,9 +5,7 @@ var router = express.Router();
 // GET all orders from database.
 router.get('/', function(req, res, next) {
   models.Order.findAll().then(function(orders) {
-    var result = orders.map(function(order) {
-      return models.orderToJSON(order);
-    });
+    var result = orders.map(function(order) { return order.jsonObject(); });
     res.json(result);
   }).catch(next);
 });
@@ -20,7 +18,7 @@ router.post('/', function(req, res, next) {
     customer_id: parseInt(req.body.customer.id)
   };
   models.Order.create(o).then(function(order) {
-    res.json(models.orderToJSON(order));
+    res.json(order.jsonObject());
   }).catch(next);
 });
 
@@ -28,7 +26,7 @@ router.post('/', function(req, res, next) {
 router.get('/:id', function(req, res, next) {
   var id = parseInt(req.params.id);
   models.Order.findById(id).then(function(order) {
-    res.json(models.orderToJSON(order));
+    res.json(order.jsonObject());
   }).catch(next);
 });
 
