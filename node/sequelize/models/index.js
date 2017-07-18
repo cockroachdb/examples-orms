@@ -21,8 +21,8 @@ module.exports.Customer = sequelize.define('customer', {
 
 module.exports.customerToJSON = function(customer) {
   return {
-    id: parseInt(this.id),
-    name: this.name
+    id: parseInt(customer.id),
+    name: customer.name
   };
 };
 
