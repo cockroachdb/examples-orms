@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -32,7 +33,7 @@ func main() {
 func setupDB(addr string) *gorm.DB {
 	db, err := gorm.Open("postgres", addr)
 	if err != nil {
-		panic("failed to connect database")
+		panic(fmt.Sprintf("failed to connect to database: %v", err))
 	}
 
 	// Migrate the schema
