@@ -22,4 +22,4 @@ endif
 .PHONY: start
 start:
 	@go build
-	@./gorm $(ADDRFLAG)
+	@./gorm '$(ADDRFLAG)'
