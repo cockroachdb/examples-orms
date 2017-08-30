@@ -249,3 +249,7 @@ func TestSQLAlchemy(t *testing.T) {
 func TestActiveRecord(t *testing.T) {
 	testORM(t, "ruby", "activerecord")
 }
+
+func TestActiveRecord4(t *testing.T) {
+	testORM(t, "ruby", "ar4")
+}
