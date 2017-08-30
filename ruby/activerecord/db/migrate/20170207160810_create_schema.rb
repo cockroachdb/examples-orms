@@ -10,9 +10,7 @@ class CreateSchema < ActiveRecord::Migration[5.1]
     end
 
     create_table :orders do |t|
-      # TODO(jordan): add default value of zero
-      # See https://github.com/cockroachdb/cockroach/issues/13993.
-      t.decimal :subtotal, precision: 18, scale: 2, null: false
+      t.decimal :subtotal, precision: 18, scale: 2, null: false, default: 0
       t.belongs_to :customer, index: true, null: false
     end
 
