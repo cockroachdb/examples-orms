@@ -41,3 +41,4 @@ deps:
 	$(MAKE) deps -C ./node/sequelize
 	$(MAKE) deps -C ./python/sqlalchemy
 	$(MAKE) deps -C ./ruby/activerecord
+	$(MAKE) deps -C ./ruby/ar4
