@@ -115,7 +115,7 @@ DELETE /customer
     curl -X DELETE http://localhost:6543/customer/1
 
 GET    /product
-    curl http://localhost:6543/customer
+    curl http://localhost:6543/product
 
 GET    /product/:id
     curl http://localhost:6543/product/1
