@@ -76,8 +76,8 @@ CREATE TABLE IF NOT EXISTS customers (
 
 CREATE TABLE IF NOT EXISTS orders (
   id           SERIAL PRIMARY KEY,
-  subtotal     DECIMAL(18,2)
-  customer_id  INT    REFERENCES customers(id),
+  subtotal     DECIMAL(18,2),
+  customer_id  INT    REFERENCES customers(id)
 );
 
 CREATE TABLE IF NOT EXISTS products (
@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS products (
 CREATE TABLE IF NOT EXISTS product_orders (
   id           SERIAL PRIMARY KEY,
   product_id   INT    REFERENCES products(id),
-  order_id     INT    REFERENCES orders(id) ON DELETE CASCADE
+  order_id     INT    REFERENCES orders(id) 
 );
 ```
 
