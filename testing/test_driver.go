@@ -60,7 +60,10 @@ func (td testDriver) TestGeneratedTables(t *testing.T) {
 	tables := td.query(t, `
 SELECT table_name
 FROM information_schema.tables
-WHERE table_schema = $1
+-- support both the legacy and the new information_schema structures. The former returned
+-- the string 'def' as the table_catalog value for all rows. The latter returns 'public' as
+-- the table_schema value for all user-created tables.
+WHERE (table_catalog = 'def' AND table_schema = $1) OR (table_catalog = $1 AND table_schema = 'public')
 ORDER BY 1`, td.dbName)
 	for i := range tables {
 		actual[tables[i]] = nil
@@ -93,7 +96,9 @@ func (td testDriver) testGeneratedColumnsForTable(t *testing.T, table string, co
 	td.queryAndAssert(t, columns, `
 SELECT column_name
 FROM information_schema.columns
-WHERE table_schema = $1 AND table_name = $2
+-- see above about supporting both the legacy and the new information_schema structures.
+WHERE ((table_catalog = 'def' AND table_schema = $1) OR (table_catalog = $1 AND table_schema = 'public'))
+  AND table_name = $2
 ORDER BY 1`, td.dbName, table)
 }
 
