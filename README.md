@@ -7,10 +7,40 @@ spec presented below.
 See the [CockroachDB ORM Compatibility Plan](https://docs.google.com/a/cockroachlabs.com/spreadsheets/d/17A0EflPqI9yhargK0n4tSw2WogQuVc5YeK-VFmKvXHM/edit?usp=sharing)
 for a roadmap towards supporting various ORMs.
 
+## Installation
+
+Clone this repo into your `$GOPATH` manually, e.g.,
+
+```
+$ cd ~/go/src/github.com/cockroachdb
+$ git clone https://github.com/cockroachdb/examples-orms
+```
+
+This is required because this project uses Go to drive the automated tests, so it will look for things in your `$GOPATH`.  If you try to clone it to a non-`$GOPATH` directory, it will fail roughly as follows:
+
+```
+$ cd ~/some/random/dir/examples-orms
+$ make test
+go test -v -i ./testing
+testing/api_handler.go:13:2: cannot find package "github.com/cockroachdb/examples-orms/go/gorm/model" in any of:
+	/usr/local/Cellar/go/1.10/libexec/src/github.com/cockroachdb/examples-orms/go/gorm/model (from $GOROOT)
+	/Users/rloveland/go/src/github.com/cockroachdb/examples-orms/go/gorm/model (from $GOPATH)
+testing/api_handler.go:11:2: cannot find package "github.com/pkg/errors" in any of:
+	/usr/local/Cellar/go/1.10/libexec/src/github.com/pkg/errors (from $GOROOT)
+	/Users/rloveland/go/src/github.com/pkg/errors (from $GOPATH)
+make: *** [test] Error 1
+```
+
+However, this is not actually a Go project, so `go get -d` will also fail (hence the need to manually clone).
+
+```
+$ go get -d github.com/cockroachdb/examples-orms
+package github.com/cockroachdb/examples-orms: no Go files in /Users/rloveland/go/src/github.com/cockroachdb/examples-orms
+```
+
 ## Testing
 
-To run automated testing against all ORMs using the latest binary of CockroachDB,
-simply run:
+To run automated testing against all ORMs using the latest binary of CockroachDB, run:
 
 ```
 make test
