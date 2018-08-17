@@ -99,6 +99,7 @@ FROM information_schema.columns
 -- see above about supporting both the legacy and the new information_schema structures.
 WHERE ((table_catalog = 'def' AND table_schema = $1) OR (table_catalog = $1 AND table_schema = 'public'))
   AND table_name = $2
+  AND column_name != 'rowid'
 ORDER BY 1`, td.dbName, table)
 }
 
