@@ -225,7 +225,7 @@ func testORM(t *testing.T, language, orm string) {
 		t.Run("RetrieveFromAPIAfterRestart", parallelTestGroup{
 			"Customers": td.TestRetrieveCustomerAfterCreation,
 			"Products":  td.TestRetrieveProductAfterCreation,
-			"Order":     td.TestRetrieveProductAfterCreation,
+			"Order":     td.TestRetrieveOrderAfterCreation,
 		}.T)
 	})
 }
@@ -243,7 +243,6 @@ func TestSequelize(t *testing.T) {
 }
 
 func TestSQLAlchemy(t *testing.T) {
-	t.Skip("https://github.com/cockroachdb/cockroach/issues/16715")
 	testORM(t, "python", "sqlalchemy")
 }
 
