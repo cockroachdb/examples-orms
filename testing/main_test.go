@@ -243,7 +243,6 @@ func TestSequelize(t *testing.T) {
 }
 
 func TestSQLAlchemy(t *testing.T) {
-	t.Skip("https://github.com/cockroachdb/cockroach/issues/16715")
 	testORM(t, "python", "sqlalchemy")
 }
 
