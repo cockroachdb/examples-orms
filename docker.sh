@@ -21,7 +21,7 @@
 
 set -euo pipefail
 
-image=docker.io/cockroachdb/postgres-test:20170308-1644
+image=docker.io/cockroachdb/postgres-test:20190103-1358
 
 gopath=$(go env GOPATH)
 gopath0=${gopath%%:*}
