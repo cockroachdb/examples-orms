@@ -24,9 +24,8 @@ from flask import Flask, Response, request
 from flask_sqlalchemy import SQLAlchemy
 import sqlalchemy.orm
 
-# This import isn't actually referenced directly below but is included to
-# clearly indicate whether the CockroachDB dialect is missing.
-import cockroachdb
+# Import CockroachDB utility code.
+from cockroachdb.sqlalchemy import run_transaction
 
 from models import db, Customer, Order, Product
 
@@ -53,8 +52,13 @@ def setup_app():
 
     # Initialize flask-sqlachemy.
     db.init_app(app)
+    # We need to create the application tables within a retry loop.
+    # CockroachDB doesn't stop the world when running DDL statements,
+    # so it's possible that they may fail due to transaction conflicts
+    # when modifying the internal database descriptors.
     with app.test_request_context():
-        db.create_all()
+        sessionmaker = sqlalchemy.orm.sessionmaker(db.engine)
+        run_transaction(sessionmaker, db.create_all)
 
     return app
 
