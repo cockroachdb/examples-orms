@@ -6,9 +6,9 @@
     "start": "node ./app.js"
   },
   "dependencies": {
-    "body-parser": "~1.15.2",
-    "express": "~4.14.0",
+    "body-parser": "^1.18.3",
+    "express": "^4.16.4",
     "sequelize": "^3.30.4",
-    "sequelize-cockroachdb": "^1.0.0"
+    "sequelize-cockroachdb": "^1.0.3"
   }
 }
