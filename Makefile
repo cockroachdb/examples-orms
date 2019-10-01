@@ -42,3 +42,4 @@ deps:
 	$(MAKE) deps -C ./python/sqlalchemy
 	$(MAKE) deps -C ./ruby/activerecord
 	$(MAKE) deps -C ./ruby/ar4
+	$(MAKE) deps -C ./python/django
