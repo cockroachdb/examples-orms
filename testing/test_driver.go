@@ -11,12 +11,19 @@ import (
 	"github.com/cockroachdb/examples-orms/go/gorm/model"
 )
 
-const (
-	customersTable     = "customers"
-	ordersTable        = "orders"
-	productsTable      = "products"
-	orderProductsTable = "order_products"
-)
+type testTableNames struct {
+	customersTable     string
+	ordersTable        string
+	productsTable      string
+	orderProductsTable string
+}
+
+type testColumnNames struct {
+	customersColumns      []string
+	ordersColumns         []string
+	productsColumns       []string
+	ordersProductsColumns []string
+}
 
 // These need to be variables so that their address can be taken.
 var (
@@ -25,6 +32,34 @@ var (
 	productName1       = "Ice Cream"
 	productPrice1      = "123.40"
 	productPrice1Float = 123.40
+
+	defaultTestTableNames = testTableNames{
+		customersTable:     "customers",
+		ordersTable:        "orders",
+		productsTable:      "products",
+		orderProductsTable: "order_products",
+	}
+
+	defaultTestColumnNames = testColumnNames{
+		customersColumns:      []string{"id", "name"},
+		ordersColumns:         []string{"customer_id", "id", "subtotal"},
+		productsColumns:       []string{"id", "name", "price"},
+		ordersProductsColumns: []string{"order_id", "product_id"},
+	}
+
+	djangoTestTableNames = testTableNames{
+		customersTable:     "cockroach_example_customers",
+		ordersTable:        "cockroach_example_orders",
+		productsTable:      "cockroach_example_products",
+		orderProductsTable: "cockroach_example_orders_product",
+	}
+
+	djangoTestColumnNames = testColumnNames{
+		customersColumns:      []string{"id", "name"},
+		ordersColumns:         []string{"customer_id", "id", "subtotal"},
+		productsColumns:       []string{"id", "name", "price"},
+		ordersProductsColumns: []string{"id", "orders_id", "products_id"},
+	}
 )
 
 // parallelTestGroup maps a set of names to test functions, and will run each
@@ -46,14 +81,18 @@ type testDriver struct {
 	db     *sql.DB
 	dbName string
 	api    apiHandler
+	// Holds the expected table names for this test.
+	tableNames testTableNames
+	// Holds the expected columns for this test.
+	columnNames testColumnNames
 }
 
 func (td testDriver) TestGeneratedTables(t *testing.T) {
 	exp := []string{
-		customersTable,
-		orderProductsTable,
-		ordersTable,
-		productsTable,
+		td.tableNames.customersTable,
+		td.tableNames.orderProductsTable,
+		td.tableNames.ordersTable,
+		td.tableNames.productsTable,
 	}
 
 	actual := make(map[string]interface{}, len(exp))
@@ -77,20 +116,20 @@ ORDER BY 1`, td.dbName)
 }
 
 func (td testDriver) TestGeneratedCustomersTableColumns(t *testing.T) {
-	exp := []string{"id", "name"}
-	td.testGeneratedColumnsForTable(t, customersTable, exp)
+	td.testGeneratedColumnsForTable(t, td.tableNames.customersTable,
+		td.columnNames.customersColumns)
 }
 func (td testDriver) TestGeneratedOrdersTableColumns(t *testing.T) {
-	exp := []string{"customer_id", "id", "subtotal"}
-	td.testGeneratedColumnsForTable(t, ordersTable, exp)
+	td.testGeneratedColumnsForTable(t, td.tableNames.ordersTable,
+		td.columnNames.ordersColumns)
 }
 func (td testDriver) TestGeneratedProductsTableColumns(t *testing.T) {
-	exp := []string{"id", "name", "price"}
-	td.testGeneratedColumnsForTable(t, productsTable, exp)
+	td.testGeneratedColumnsForTable(t, td.tableNames.productsTable,
+		td.columnNames.productsColumns)
 }
 func (td testDriver) TestGeneratedOrderProductsTableColumns(t *testing.T) {
-	exp := []string{"order_id", "product_id"}
-	td.testGeneratedColumnsForTable(t, orderProductsTable, exp)
+	td.testGeneratedColumnsForTable(t, td.tableNames.orderProductsTable,
+		td.columnNames.ordersProductsColumns)
 }
 func (td testDriver) testGeneratedColumnsForTable(t *testing.T, table string, columns []string) {
 	td.queryAndAssert(t, columns, `
@@ -104,16 +143,16 @@ ORDER BY 1`, td.dbName, table)
 }
 
 func (td testDriver) TestCustomersEmpty(t *testing.T) {
-	td.testTableEmpty(t, productsTable)
+	td.testTableEmpty(t, td.tableNames.productsTable)
 }
 func (td testDriver) TestOrdersTableEmpty(t *testing.T) {
-	td.testTableEmpty(t, customersTable)
+	td.testTableEmpty(t, td.tableNames.customersTable)
 }
 func (td testDriver) TestProductsTableEmpty(t *testing.T) {
-	td.testTableEmpty(t, ordersTable)
+	td.testTableEmpty(t, td.tableNames.ordersTable)
 }
 func (td testDriver) TestOrderProductsTableEmpty(t *testing.T) {
-	td.testTableEmpty(t, orderProductsTable)
+	td.testTableEmpty(t, td.tableNames.orderProductsTable)
 }
 func (td testDriver) testTableEmpty(t *testing.T, table string) {
 	td.queryAndAssert(t, []string{"0"}, fmt.Sprintf(`SELECT COUNT(*) FROM %s`, table))
@@ -157,18 +196,20 @@ func (td testDriver) TestCreateCustomer(t *testing.T) {
 	if err := td.api.createCustomer(customerName1); err != nil {
 		t.Fatalf("error creating customer: %v", err)
 	}
-	td.queryAndAssert(t, []string{customerName1}, fmt.Sprintf(`SELECT name FROM %s`, customersTable))
+	td.queryAndAssert(t, []string{customerName1},
+		fmt.Sprintf(`SELECT name FROM %s`, td.tableNames.customersTable))
 }
 func (td testDriver) TestCreateProduct(t *testing.T) {
 	if err := td.api.createProduct(productName1, productPrice1Float); err != nil {
 		t.Fatalf("error creating product: %v", err)
 	}
-	td.queryAndAssert(t, []string{row(productName1, productPrice1)}, fmt.Sprintf(`SELECT name, price FROM %s`, productsTable))
+	td.queryAndAssert(t, []string{row(productName1, productPrice1)},
+		fmt.Sprintf(`SELECT name, price FROM %s`, td.tableNames.productsTable))
 }
 
 func (td testDriver) TestCreateOrder(t *testing.T) {
 	// Get the single customer ID.
-	customerIDs, err := td.queryIDs(t, customersTable)
+	customerIDs, err := td.queryIDs(t, td.tableNames.customersTable)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -178,7 +219,7 @@ func (td testDriver) TestCreateOrder(t *testing.T) {
 	customerID := customerIDs[0]
 
 	// Get the single product.
-	productIDs, err := td.queryIDs(t, productsTable)
+	productIDs, err := td.queryIDs(t, td.tableNames.productsTable)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -190,7 +231,8 @@ func (td testDriver) TestCreateOrder(t *testing.T) {
 	if err := td.api.createOrder(customerID, productID, productPrice1Float); err != nil {
 		t.Fatalf("error creating order: %v", err)
 	}
-	td.queryAndAssert(t, []string{row(productPrice1)}, fmt.Sprintf(`SELECT subtotal FROM %s`, ordersTable))
+	td.queryAndAssert(t, []string{row(productPrice1)},
+		fmt.Sprintf(`SELECT subtotal FROM %s`, td.tableNames.ordersTable))
 }
 
 func (td testDriver) TestRetrieveCustomerAfterCreation(t *testing.T) {
@@ -264,7 +306,9 @@ func (td testDriver) query(t *testing.T, query string, args ...interface{}) []st
 	return found
 }
 
-func (td testDriver) queryAndAssert(t *testing.T, expected []string, query string, args ...interface{}) {
+func (td testDriver) queryAndAssert(
+	t *testing.T, expected []string, query string, args ...interface{},
+) {
 	found := td.query(t, query, args...)
 
 	if !reflect.DeepEqual(expected, found) {

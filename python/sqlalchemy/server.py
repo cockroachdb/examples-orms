@@ -65,7 +65,7 @@ def setup_app():
 app = setup_app()
 
 
-@app.route('/ping')
+@app.route('/ping/')
 def ping():
     return 'python/sqlalchemy'
 
@@ -73,14 +73,14 @@ def ping():
 # The following functions respond to various HTTP routes, as described in the
 # top-level README.md.
 
-@app.route('/customer', methods=['GET'])
+@app.route('/customer/', methods=['GET'])
 def get_customers():
     customers = [c.as_dict() for c in Customer.query.all()]
     return Response(json.dumps(customers), 200,
                     mimetype="application/json; charset=UTF-8")
 
 
-@app.route('/customer', methods=['POST'])
+@app.route('/customer/', methods=['POST'])
 def create_customer():
     try:
         body = request.stream.read().decode('utf-8')
@@ -93,7 +93,7 @@ def create_customer():
     return body
 
 
-@app.route('/customer/<id>', methods=['GET'])
+@app.route('/customer/<id>/', methods=['GET'])
 def get_customer(id=None):
     if id is None:
         return Response('no ID specified', 400)
@@ -102,14 +102,14 @@ def get_customer(id=None):
                     mimetype="application/json; charset=UTF-8")
 
 
-@app.route('/order', methods=['GET'])
+@app.route('/order/', methods=['GET'])
 def get_orders():
     orders = [o.as_dict() for o in Order.query.all()]
     return Response(json.dumps(orders), 200,
                     mimetype="application/json; charset=UTF-8")
 
 
-@app.route('/order', methods=['POST'])
+@app.route('/order/', methods=['POST'])
 def create_order():
     try:
         body = request.stream.read().decode('utf-8')
@@ -125,7 +125,7 @@ def create_order():
     return body
 
 
-@app.route('/order/<id>', methods=['GET'])
+@app.route('/order/<id>/', methods=['GET'])
 def get_order(id=None):
     if id is None:
         return Response('no ID specified', 400)
@@ -134,14 +134,14 @@ def get_order(id=None):
                     mimetype="application/json; charset=UTF-8")
 
 
-@app.route('/product', methods=['GET'])
+@app.route('/product/', methods=['GET'])
 def get_products():
     products = [p.as_dict() for p in Product.query.all()]
     return Response(json.dumps(products), 200,
                     mimetype="application/json; charset=UTF-8")
 
 
-@app.route('/product', methods=['POST'])
+@app.route('/product/', methods=['POST'])
 def create_product():
     try:
         body = request.stream.read().decode('utf-8')
@@ -154,7 +154,7 @@ def create_product():
     return body
 
 
-@app.route('/product/<id>', methods=['GET'])
+@app.route('/product/<id>/', methods=['GET'])
 def get_product(id=None):
     if id is None:
         return Response('no ID specified', 400)

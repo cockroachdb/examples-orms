@@ -8,19 +8,18 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/pkg/errors"
-
 	"github.com/cockroachdb/examples-orms/go/gorm/model"
+	"github.com/pkg/errors"
 )
 
 const (
 	applicationAddr = "localhost:6543"
 	applicationURL  = "http://" + applicationAddr
 
-	pingPath      = applicationURL + "/ping"
-	customersPath = applicationURL + "/customer"
-	ordersPath    = applicationURL + "/order"
-	productsPath  = applicationURL + "/product"
+	pingPath      = applicationURL + "/ping/"
+	customersPath = applicationURL + "/customer/"
+	ordersPath    = applicationURL + "/order/"
+	productsPath  = applicationURL + "/product/"
 
 	jsonContentType = "application/json"
 )
