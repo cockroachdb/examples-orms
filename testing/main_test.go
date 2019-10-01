@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/cockroachdb/cockroach-go/testserver"
-
 	// Import postgres driver.
 	_ "github.com/lib/pq"
 )
@@ -140,7 +139,9 @@ func initORMApp(app application, dbURL *url.URL) (func() error, error) {
 	}
 }
 
-func testORM(t *testing.T, language, orm string) {
+func testORM(
+	t *testing.T, language, orm string, tableNames testTableNames, columnNames testColumnNames,
+) {
 	app := application{
 		language: language,
 		orm:      orm,
@@ -150,8 +151,10 @@ func testORM(t *testing.T, language, orm string) {
 	defer stopDB()
 
 	td := testDriver{
-		db:     db,
-		dbName: app.dbName(),
+		db:          db,
+		dbName:      app.dbName(),
+		tableNames:  tableNames,
+		columnNames: columnNames,
 	}
 
 	t.Run("FirstRun", func(t *testing.T) {
@@ -231,25 +234,29 @@ func testORM(t *testing.T, language, orm string) {
 }
 
 func TestGORM(t *testing.T) {
-	testORM(t, "go", "gorm")
+	testORM(t, "go", "gorm", defaultTestTableNames, defaultTestColumnNames)
 }
 
 func TestHibernate(t *testing.T) {
-	testORM(t, "java", "hibernate")
+	testORM(t, "java", "hibernate", defaultTestTableNames, defaultTestColumnNames)
 }
 
 func TestSequelize(t *testing.T) {
-	testORM(t, "node", "sequelize")
+	testORM(t, "node", "sequelize", defaultTestTableNames, defaultTestColumnNames)
 }
 
 func TestSQLAlchemy(t *testing.T) {
-	testORM(t, "python", "sqlalchemy")
+	testORM(t, "python", "sqlalchemy", defaultTestTableNames, defaultTestColumnNames)
+}
+
+func TestDjango(t *testing.T) {
+	testORM(t, "python", "django", djangoTestTableNames, djangoTestColumnNames)
 }
 
 func TestActiveRecord(t *testing.T) {
-	testORM(t, "ruby", "activerecord")
+	testORM(t, "ruby", "activerecord", defaultTestTableNames, defaultTestColumnNames)
 }
 
 func TestActiveRecord4(t *testing.T) {
-	testORM(t, "ruby", "ar4")
+	testORM(t, "ruby", "ar4", defaultTestTableNames, defaultTestColumnNames)
 }
