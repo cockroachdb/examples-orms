@@ -164,9 +164,10 @@ func (td testDriver) TestRetrieveCustomersBeforeCreation(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expected := []model.Customer{}
-	if !reflect.DeepEqual(expected, found) {
-		t.Fatalf("expecting customers from api before creation to be %v, found %v", expected, found)
+	expected1 := []model.Customer{}
+	var expected2 []model.Customer
+	if !reflect.DeepEqual(expected1, found) && !reflect.DeepEqual(expected2, found) {
+		t.Fatalf("expecting customers from api before creation to be %v or %v, found %v", expected1, expected2, found)
 	}
 }
 func (td testDriver) TestRetrieveProductsBeforeCreation(t *testing.T) {
@@ -175,9 +176,10 @@ func (td testDriver) TestRetrieveProductsBeforeCreation(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expected := []model.Product{}
-	if !reflect.DeepEqual(expected, found) {
-		t.Fatalf("expecting products from api before creation to be %v, found %v", expected, found)
+	expected1 := []model.Product{}
+	var expected2 []model.Product
+	if !reflect.DeepEqual(expected1, found) && !reflect.DeepEqual(expected2, found) {
+		t.Fatalf("expecting products from api before creation to be %v or %v, found %v", expected1, expected2, found)
 	}
 }
 func (td testDriver) TestRetrieveOrdersBeforeCreation(t *testing.T) {
@@ -186,9 +188,10 @@ func (td testDriver) TestRetrieveOrdersBeforeCreation(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expected := []model.Order{}
-	if !reflect.DeepEqual(expected, found) {
-		t.Fatalf("expecting orders from api before creation to be %v, found %v", expected, found)
+	expected1 := []model.Order{}
+	var expected2 []model.Order
+	if !reflect.DeepEqual(expected1, found) && !reflect.DeepEqual(expected2, found) {
+		t.Fatalf("expecting orders from api before creation to be %v or %v, found %v", expected1, expected2, found)
 	}
 }
 
