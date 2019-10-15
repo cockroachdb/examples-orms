@@ -21,7 +21,7 @@
 
 set -euo pipefail
 
-image=docker.io/cockroachdb/postgres-test:20190103-1358
+image=cockroachdb/example-orms-builder:latest
 
 gopath=$(go env GOPATH)
 gopath0=${gopath%%:*}
@@ -50,6 +50,7 @@ exec docker run \
   --workdir="/home/${username}/go/src/github.com/cockroachdb/examples-orms" \
   --env=PIP_USER=1 \
   --env=GEM_HOME="/home/${username}/.gems" \
+  --env=GOPATH="/home/${username}/go" \
   --user="${uid_gid}" \
   "$image" \
   "$@"
