@@ -249,9 +249,9 @@ func TestSQLAlchemy(t *testing.T) {
 	testORM(t, "python", "sqlalchemy", defaultTestTableNames, defaultTestColumnNames)
 }
 
-func TestDjango(t *testing.T) {
-	testORM(t, "python", "django", djangoTestTableNames, djangoTestColumnNames)
-}
+// func TestDjango(t *testing.T) {
+// 	testORM(t, "python", "django", djangoTestTableNames, djangoTestColumnNames)
+// }
 
 func TestActiveRecord(t *testing.T) {
 	testORM(t, "ruby", "activerecord", defaultTestTableNames, defaultTestColumnNames)
