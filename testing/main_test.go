@@ -250,6 +250,7 @@ func TestSQLAlchemy(t *testing.T) {
 }
 
 func TestDjango(t *testing.T) {
+	t.Skip("TestDjango fails on CRDB v2.1; github.com/cockroachdb/cockroach/issues/42083")
 	testORM(t, "python", "django", djangoTestTableNames, djangoTestColumnNames)
 }
 
