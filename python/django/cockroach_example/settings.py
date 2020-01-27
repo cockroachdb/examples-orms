@@ -84,7 +84,7 @@ if addr is not None:
 
 DATABASES = {
     'default': {
-        'ENGINE' : 'cockroach.django',
+        'ENGINE' : 'django_cockroachdb',
         'NAME' : 'company_django',
         'USER' : 'root',
         'PASSWORD': '',
