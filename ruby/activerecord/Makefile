@@ -24,5 +24,5 @@ start:
 
 .PHONY: deps
 deps:
-	@gem install bundler
+	@gem install bundler:1.15.1
 	@bin/bundle

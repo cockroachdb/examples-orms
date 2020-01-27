@@ -21,7 +21,7 @@
 
 set -euo pipefail
 
-image=cockroachdb/example-orms-builder:latest
+image=cockroachdb/example-orms-builder:20200129-1444
 
 gopath=$(go env GOPATH)
 gopath0=${gopath%%:*}
