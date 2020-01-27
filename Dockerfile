@@ -1,8 +1,8 @@
-FROM openjdk:8
+FROM openjdk:8-slim-buster
 
 RUN apt-get update -y
 
-RUN apt-get install -y zlib1g zlib1g-dev
+RUN apt-get install -y zlib1g zlib1g-dev curl wget apt-utils
 
 # installations for django
 RUN apt-get install -y python3 python3-dev python3-pip
@@ -17,7 +17,7 @@ RUN apt-get install -y nodejs
 
 # RUN apt-get install -y ruby-full
 
-RUN apt-get install -y postgresql postgresql-contrib libpq-dev git wget build-essential curl openssl
+RUN apt-get install -y postgresql postgresql-contrib libpq-dev git build-essential openssl
 
 # Installations for gradle and gradlew
 RUN apt-get install gradle -y

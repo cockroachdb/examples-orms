@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"strings"
 	"syscall"
 	"testing"
 	"time"
@@ -42,7 +43,7 @@ var customURLSchemes = map[application]string{
 }
 
 // initTestDatabase launches a test database as a subprocess.
-func initTestDatabase(t *testing.T, app application) (*sql.DB, *url.URL, func()) {
+func initTestDatabase(t *testing.T, app application) (*sql.DB, *url.URL, string, func()) {
 	ts, err := testserver.NewTestServer()
 	if err != nil {
 		t.Fatal(err)
@@ -70,10 +71,16 @@ func initTestDatabase(t *testing.T, app application) (*sql.DB, *url.URL, func())
 		t.Fatal(err)
 	}
 
+	var version string
+	if err := db.QueryRow(`SELECT value FROM crdb_internal.node_build_info where field = 'Version'`,
+	).Scan(&version); err != nil {
+		t.Fatal(err)
+	}
+
 	if scheme, ok := customURLSchemes[app]; ok {
 		url.Scheme = scheme
 	}
-	return db, url, func() {
+	return db, url, version, func() {
 		_ = db.Close()
 		ts.Stop()
 	}
@@ -147,8 +154,12 @@ func testORM(
 		orm:      orm,
 	}
 
-	db, dbURL, stopDB := initTestDatabase(t, app)
+	db, dbURL, version, stopDB := initTestDatabase(t, app)
 	defer stopDB()
+
+	if orm == "django"  && (strings.HasPrefix(version, "v2.0") || strings.HasPrefix(version, "v2.1")) {
+		t.Skip("TestDjango fails on CRDB <=v2.1 due to missing foreign key support.")
+	}
 
 	td := testDriver{
 		db:          db,
@@ -250,7 +261,6 @@ func TestSQLAlchemy(t *testing.T) {
 }
 
 func TestDjango(t *testing.T) {
-	t.Skip("TestDjango fails on CRDB v2.1; github.com/cockroachdb/cockroach/issues/42083")
 	testORM(t, "python", "django", djangoTestTableNames, djangoTestColumnNames)
 }
 
