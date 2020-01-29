@@ -42,5 +42,4 @@ deps:
 	$(MAKE) deps -C ./python/sqlalchemy
 	$(MAKE) deps -C ./ruby/activerecord
 	$(MAKE) deps -C ./ruby/ar4
-	# Django test is disabled for now.
-	# $(MAKE) deps -C ./python/django
+	$(MAKE) deps -C ./python/django
