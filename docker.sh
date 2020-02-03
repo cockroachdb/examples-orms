@@ -46,7 +46,7 @@ echo "${username}:x:${uid_gid}::/home/${username}:/bin/bash" > "${container_root
 exec docker run \
   --volume="${container_root}/etc/passwd:/etc/passwd" \
   --volume="${container_root}/home/${username}:/home/${username}" \
-  --volume="${gopath0}/src:/home/${username}/go/src" \
+  --volume="${gopath0}/src:/home/${username}/go/src:/home/${username}/go/pkg" \
   --workdir="/home/${username}/go/src/github.com/cockroachdb/examples-orms" \
   --env=PIP_USER=1 \
   --env=GEM_HOME="/home/${username}/.gems" \
