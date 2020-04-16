@@ -23,4 +23,4 @@ start:
 deps:
 	# To avoid permissions errors, the following should be run in a virtualenv
 	# (preferred) or as root.
-	pip install flask-sqlalchemy cockroachdb psycopg2
+	pip install flask-sqlalchemy sqlalchemy-cockroachdb psycopg2
