@@ -5,5 +5,5 @@ start:
 deps:
 	git clone https://github.com/cockroachdb/django-cockroachdb || true
 	pip3 install --upgrade setuptools
-	pip3 install django
+	pip3 install django psycopg2
 	cd django-cockroachdb && pip3 install .
