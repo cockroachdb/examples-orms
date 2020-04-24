@@ -31,7 +31,7 @@ RUN curl https://storage.googleapis.com/golang/go1.9.1.linux-amd64.tar.gz -o gol
 RUN mkdir ruby-install && \
 	curl -fsSL https://github.com/postmodern/ruby-install/archive/v0.6.1.tar.gz | tar --strip-components=1 -C ruby-install -xz && \
 	make -C ruby-install install && \
-	ruby-install --system ruby 2.4.0 && \
+	ruby-install --system ruby 2.7.1 && \
 	gem update --system
 
 ENV PATH /usr/local/go/bin:$PATH
