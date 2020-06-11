@@ -7,9 +7,6 @@ RUN apt-get install -y zlib1g zlib1g-dev curl wget apt-utils
 # installations for django
 RUN apt-get install -y python3 python3-dev python3-pip
 
-# installations for sqlalchemy
-RUN apt-get install -y python python-dev python-pip
-
 # installations for node
 RUN curl -sL https://deb.nodesource.com/setup_12.x | bash - && apt-get -y update
 
