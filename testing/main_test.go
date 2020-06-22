@@ -157,8 +157,12 @@ func testORM(
 	db, dbURL, version, stopDB := initTestDatabase(t, app)
 	defer stopDB()
 
-	if orm == "django"  && (strings.HasPrefix(version, "v2.0") || strings.HasPrefix(version, "v2.1")) {
+	if orm == "django" && (strings.HasPrefix(version, "v2.0") || strings.HasPrefix(version, "v2.1")) {
 		t.Skip("TestDjango fails on CRDB <=v2.1 due to missing foreign key support.")
+	}
+
+	if orm == "activerecord" && (strings.HasPrefix(version, "v2.") || strings.HasPrefix(version, "v19.1")) {
+		t.Skip("TestActiveRecord fails on CRDB <=v19.1 due to missing pg_catalog support.")
 	}
 
 	td := testDriver{
