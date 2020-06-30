@@ -7,10 +7,11 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
-	"strings"
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/cockroachdb/examples-orms/version"
 
 	"github.com/cockroachdb/cockroach-go/testserver"
 	// Import postgres driver.
@@ -71,16 +72,17 @@ func initTestDatabase(t *testing.T, app application) (*sql.DB, *url.URL, string,
 		t.Fatal(err)
 	}
 
-	var version string
-	if err := db.QueryRow(`SELECT value FROM crdb_internal.node_build_info where field = 'Version'`,
-	).Scan(&version); err != nil {
+	var crdbVersion string
+	if err := db.QueryRow(
+		`SELECT value FROM crdb_internal.node_build_info where field = 'Version'`,
+	).Scan(&crdbVersion); err != nil {
 		t.Fatal(err)
 	}
 
 	if scheme, ok := customURLSchemes[app]; ok {
 		url.Scheme = scheme
 	}
-	return db, url, version, func() {
+	return db, url, crdbVersion, func() {
 		_ = db.Close()
 		ts.Stop()
 	}
@@ -146,6 +148,20 @@ func initORMApp(app application, dbURL *url.URL) (func() error, error) {
 	}
 }
 
+var minRequiredVersionsByORMName = map[string]struct {
+	v       *version.Version
+	skipMsg string
+}{
+	"django": {
+		v:       version.MustParse("v19.1.0-alpha"),
+		skipMsg: "TestDjango fails on CRDB <=v2.1 due to missing foreign key support.",
+	},
+	"activerecord": {
+		v:       version.MustParse("v19.2.0-alpha"),
+		skipMsg: "TestActiveRecord fails on CRDB <=v19.1 due to missing pg_catalog support.",
+	},
+}
+
 func testORM(
 	t *testing.T, language, orm string, tableNames testTableNames, columnNames testColumnNames,
 ) {
@@ -154,15 +170,17 @@ func testORM(
 		orm:      orm,
 	}
 
-	db, dbURL, version, stopDB := initTestDatabase(t, app)
+	db, dbURL, crdbVersion, stopDB := initTestDatabase(t, app)
 	defer stopDB()
 
-	if orm == "django" && (strings.HasPrefix(version, "v2.0") || strings.HasPrefix(version, "v2.1")) {
-		t.Skip("TestDjango fails on CRDB <=v2.1 due to missing foreign key support.")
+	v, err := version.Parse(crdbVersion)
+	if err != nil {
+		t.Fatal(err)
 	}
-
-	if orm == "activerecord" && (strings.HasPrefix(version, "v2.") || strings.HasPrefix(version, "v19.1")) {
-		t.Skip("TestActiveRecord fails on CRDB <=v19.1 due to missing pg_catalog support.")
+	if info, ok := minRequiredVersionsByORMName[orm]; ok {
+		if !v.AtLeast(info.v) {
+			t.Skip(info.skipMsg)
+		}
 	}
 
 	td := testDriver{
