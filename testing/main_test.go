@@ -7,10 +7,11 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
-	"strings"
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/cockroachdb/examples-orms/version"
 
 	"github.com/cockroachdb/cockroach-go/testserver"
 	// Import postgres driver.
@@ -42,48 +43,76 @@ var customURLSchemes = map[application]string{
 	{language: "python", orm: "sqlalchemy"}: "cockroachdb",
 }
 
-// initTestDatabase launches a test database as a subprocess.
-func initTestDatabase(t *testing.T, app application) (*sql.DB, *url.URL, string, func()) {
+type tenantServer interface {
+	NewTenantServer() (testserver.TestServer, error)
+}
+
+// newServer creates a new cockroachDB server.
+func newServer(t *testing.T) testserver.TestServer {
+	t.Helper()
 	ts, err := testserver.NewTestServer()
 	if err != nil {
 		t.Fatal(err)
 	}
+	return ts
+}
 
-	if err := ts.Start(); err != nil {
-		t.Fatal(err)
-	}
-
-	url := ts.PGURL()
-	if url == nil {
-		t.Fatalf("url not found")
-	}
-	url.Path = app.dbName()
-
-	db, err := sql.Open("postgres", url.String())
+// newTenant creates a new SQL Tenant pointed at the given TestServer. See
+// TestServer.NewTenantServer for more information.
+func newTenant(t *testing.T, ts testserver.TestServer) testserver.TestServer {
+	t.Helper()
+	tenant, err := ts.(tenantServer).NewTenantServer()
 	if err != nil {
 		t.Fatal(err)
 	}
+	return tenant
+}
 
-	ts.WaitForInit(db)
-
+// startServerWithApplication launches a test database as a subprocess.
+func startServerWithApplication(t *testing.T, ts testserver.TestServer, app application) (*sql.DB, *url.URL, func()) {
+	t.Helper()
+	if err := ts.Start(); err != nil {
+		t.Fatal(err)
+	}
+	serverURL := ts.PGURL()
+	if serverURL == nil {
+		t.Fatal("url not found")
+	}
+	pgURL := *serverURL
+	pgURL.Path = app.dbName()
+	db, err := sql.Open("postgres", pgURL.String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := ts.WaitForInit(db); err != nil {
+		t.Fatal(err)
+	}
 	// Create the database if it does not exist.
 	if _, err := db.Exec("CREATE DATABASE IF NOT EXISTS " + app.dbName()); err != nil {
 		t.Fatal(err)
 	}
-
-	var version string
-	if err := db.QueryRow(`SELECT value FROM crdb_internal.node_build_info where field = 'Version'`,
-	).Scan(&version); err != nil {
-		t.Fatal(err)
-	}
-
 	if scheme, ok := customURLSchemes[app]; ok {
-		url.Scheme = scheme
+		pgURL.Scheme = scheme
 	}
-	return db, url, version, func() {
+	return db, &pgURL, func() {
 		_ = db.Close()
 		ts.Stop()
 	}
+}
+
+func getVersionFromDB(t *testing.T, db *sql.DB) *version.Version {
+	t.Helper()
+	var crdbVersion string
+	if err := db.QueryRow(
+		`SELECT value FROM crdb_internal.node_build_info where field = 'Version'`,
+	).Scan(&crdbVersion); err != nil {
+		t.Fatal(err)
+	}
+	v, err := version.Parse(crdbVersion)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return v
 }
 
 // initORMApp launches an ORM application as a subprocess and returns a
@@ -146,6 +175,25 @@ func initORMApp(app application, dbURL *url.URL) (func() error, error) {
 	}
 }
 
+var minRequiredVersionsByORMName = map[string]struct {
+	v       *version.Version
+	skipMsg string
+}{
+	"django": {
+		v:       version.MustParse("v19.1.0-alpha"),
+		skipMsg: "TestDjango fails on CRDB <=v2.1 due to missing foreign key support.",
+	},
+	"activerecord": {
+		v:       version.MustParse("v19.2.0-alpha"),
+		skipMsg: "TestActiveRecord fails on CRDB <=v19.1 due to missing pg_catalog support.",
+	},
+}
+
+// minTenantVersion is the minimum version that supports creating SQL tenants
+// (i.e. the `cockroach mt start-sql command). Earlier versions cannot create
+// tenants.
+var minTenantVersion = version.MustParse("v20.2.0-alpha")
+
 func testORM(
 	t *testing.T, language, orm string, tableNames testTableNames, columnNames testColumnNames,
 ) {
@@ -154,98 +202,134 @@ func testORM(
 		orm:      orm,
 	}
 
-	db, dbURL, version, stopDB := initTestDatabase(t, app)
-	defer stopDB()
-
-	if orm == "django" && (strings.HasPrefix(version, "v2.0") || strings.HasPrefix(version, "v2.1")) {
-		t.Skip("TestDjango fails on CRDB <=v2.1 due to missing foreign key support.")
+	type testCase struct {
+		name  string
+		db    *sql.DB
+		dbURL *url.URL
 	}
+	var testCases []testCase
+	{
+		ts := newServer(t)
+		db, dbURL, stopDB := startServerWithApplication(t, ts, app)
+		defer stopDB()
 
-	if orm == "activerecord" && (strings.HasPrefix(version, "v2.") || strings.HasPrefix(version, "v19.1")) {
-		t.Skip("TestActiveRecord fails on CRDB <=v19.1 due to missing pg_catalog support.")
-	}
-
-	td := testDriver{
-		db:          db,
-		dbName:      app.dbName(),
-		tableNames:  tableNames,
-		columnNames: columnNames,
-	}
-
-	t.Run("FirstRun", func(t *testing.T) {
-		stopApp, err := initORMApp(app, dbURL)
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer func() {
-			if err := stopApp(); err != nil {
-				t.Fatal(err)
+		crdbVersion := getVersionFromDB(t, db)
+		// Check that this ORM can be run with the given cockroach version.
+		if info, ok := minRequiredVersionsByORMName[orm]; ok {
+			if !crdbVersion.AtLeast(info.v) {
+				t.Skip(info.skipMsg)
 			}
-		}()
-
-		// Test that the correct tables were generated.
-		t.Run("GeneratedTables", td.TestGeneratedTables)
-
-		// Test that the correct columns in those tables were generated.
-		t.Run("GeneratedColumns", parallelTestGroup{
-			"CustomersTable":     td.TestGeneratedCustomersTableColumns,
-			"ProductsTable":      td.TestGeneratedProductsTableColumns,
-			"OrdersTable":        td.TestGeneratedOrdersTableColumns,
-			"OrderProductsTable": td.TestGeneratedOrderProductsTableColumns,
-		}.T)
-
-		// Test that the tables begin empty.
-		t.Run("EmptyTables", parallelTestGroup{
-			"CustomersTable":     td.TestCustomersEmpty,
-			"ProductsTable":      td.TestProductsTableEmpty,
-			"OrdersTable":        td.TestOrdersTableEmpty,
-			"OrderProductsTable": td.TestOrderProductsTableEmpty,
-		}.T)
-
-		// Test that the API returns empty sets for each collection.
-		t.Run("RetrieveFromAPIBeforeCreation", parallelTestGroup{
-			"Customers": td.TestRetrieveCustomersBeforeCreation,
-			"Products":  td.TestRetrieveProductsBeforeCreation,
-			"Orders":    td.TestRetrieveOrdersBeforeCreation,
-		}.T)
-
-		// Test the creation of initial objects.
-		t.Run("CreateCustomer", td.TestCreateCustomer)
-		t.Run("CreateProduct", td.TestCreateProduct)
-
-		// Test that the API returns what we just created.
-		t.Run("RetrieveFromAPIAfterInitialCreation", parallelTestGroup{
-			"Customers": td.TestRetrieveCustomerAfterCreation,
-			"Products":  td.TestRetrieveProductAfterCreation,
-		}.T)
-
-		// Test the creation of dependent objects.
-		t.Run("CreateOrder", td.TestCreateOrder)
-
-		// Test that the API returns what we just created.
-		t.Run("RetrieveFromAPIAfterDependentCreation", parallelTestGroup{
-			"Order": td.TestRetrieveProductAfterCreation,
-		}.T)
-	})
-
-	t.Run("SecondRun", func(t *testing.T) {
-		stopApp, err := initORMApp(app, dbURL)
-		if err != nil {
-			t.Fatal(err)
 		}
-		defer func() {
-			if err := stopApp(); err != nil {
-				t.Fatal(err)
-			}
-		}()
 
-		// Test that the API still returns all created objects.
-		t.Run("RetrieveFromAPIAfterRestart", parallelTestGroup{
-			"Customers": td.TestRetrieveCustomerAfterCreation,
-			"Products":  td.TestRetrieveProductAfterCreation,
-			"Order":     td.TestRetrieveProductAfterCreation,
-		}.T)
-	})
+		testCases = []testCase{
+			{
+				name:  "SystemTenant",
+				db:    db,
+				dbURL: dbURL,
+			},
+		}
+
+		if crdbVersion.AtLeast(minTenantVersion) {
+			// This cockroach version supports creating tenants, add a test case to
+			// run a tenant server.
+			tenant := newTenant(t, ts)
+			db, dbURL, stopDB := startServerWithApplication(t, tenant, app)
+			defer stopDB()
+			testCases = append(testCases, testCase{
+				name:  "RegularTenant",
+				db:    db,
+				dbURL: dbURL,
+			})
+		} else {
+			t.Logf("not running tenant test case because minimum tenant version check was not satisfied (%s is < %s)", crdbVersion, minTenantVersion)
+		}
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			td := testDriver{
+				db:          tc.db,
+				dbName:      app.dbName(),
+				tableNames:  tableNames,
+				columnNames: columnNames,
+			}
+
+			t.Run("FirstRun", func(t *testing.T) {
+				stopApp, err := initORMApp(app, tc.dbURL)
+				if err != nil {
+					t.Fatal(err)
+				}
+				defer func() {
+					if err := stopApp(); err != nil {
+						t.Fatal(err)
+					}
+				}()
+
+				// Test that the correct tables were generated.
+				t.Run("GeneratedTables", td.TestGeneratedTables)
+
+				// Test that the correct columns in those tables were generated.
+				t.Run("GeneratedColumns", parallelTestGroup{
+					"CustomersTable":     td.TestGeneratedCustomersTableColumns,
+					"ProductsTable":      td.TestGeneratedProductsTableColumns,
+					"OrdersTable":        td.TestGeneratedOrdersTableColumns,
+					"OrderProductsTable": td.TestGeneratedOrderProductsTableColumns,
+				}.T)
+
+				// Test that the tables begin empty.
+				t.Run("EmptyTables", parallelTestGroup{
+					"CustomersTable":     td.TestCustomersEmpty,
+					"ProductsTable":      td.TestProductsTableEmpty,
+					"OrdersTable":        td.TestOrdersTableEmpty,
+					"OrderProductsTable": td.TestOrderProductsTableEmpty,
+				}.T)
+
+				// Test that the API returns empty sets for each collection.
+				t.Run("RetrieveFromAPIBeforeCreation", parallelTestGroup{
+					"Customers": td.TestRetrieveCustomersBeforeCreation,
+					"Products":  td.TestRetrieveProductsBeforeCreation,
+					"Orders":    td.TestRetrieveOrdersBeforeCreation,
+				}.T)
+
+				// Test the creation of initial objects.
+				t.Run("CreateCustomer", td.TestCreateCustomer)
+				t.Run("CreateProduct", td.TestCreateProduct)
+
+				// Test that the API returns what we just created.
+				t.Run("RetrieveFromAPIAfterInitialCreation", parallelTestGroup{
+					"Customers": td.TestRetrieveCustomerAfterCreation,
+					"Products":  td.TestRetrieveProductAfterCreation,
+				}.T)
+
+				// Test the creation of dependent objects.
+				t.Run("CreateOrder", td.TestCreateOrder)
+
+				// Test that the API returns what we just created.
+				t.Run("RetrieveFromAPIAfterDependentCreation", parallelTestGroup{
+					"Order": td.TestRetrieveProductAfterCreation,
+				}.T)
+			})
+
+			t.Run("SecondRun", func(t *testing.T) {
+				stopApp, err := initORMApp(app, tc.dbURL)
+				if err != nil {
+					t.Fatal(err)
+				}
+				defer func() {
+					if err := stopApp(); err != nil {
+						t.Fatal(err)
+					}
+				}()
+
+				// Test that the API still returns all created objects.
+				t.Run("RetrieveFromAPIAfterRestart", parallelTestGroup{
+					"Customers": td.TestRetrieveCustomerAfterCreation,
+					"Products":  td.TestRetrieveProductAfterCreation,
+					"Order":     td.TestRetrieveProductAfterCreation,
+				}.T)
+			})
+		})
+	}
 }
 
 func TestGORM(t *testing.T) {
