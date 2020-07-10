@@ -73,3 +73,7 @@
 [[constraint]]
   name = "github.com/julienschmidt/httprouter"
   version = "1.1.0"
+
+[[constraint]]
+  name = "github.com/cockroachdb/cockroach-go"
+  revision = "b7c8285b7ed3b7e117851f11bdb56ad33cc16320"
