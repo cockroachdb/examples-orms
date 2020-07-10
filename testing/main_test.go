@@ -11,9 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cockroachdb/examples-orms/version"
-
 	"github.com/cockroachdb/cockroach-go/testserver"
+	"github.com/cockroachdb/examples-orms/version"
 	// Import postgres driver.
 	_ "github.com/lib/pq"
 )
@@ -69,11 +68,10 @@ func newTenant(t *testing.T, ts testserver.TestServer) testserver.TestServer {
 }
 
 // startServerWithApplication launches a test database as a subprocess.
-func startServerWithApplication(t *testing.T, ts testserver.TestServer, app application) (*sql.DB, *url.URL, func()) {
+func startServerWithApplication(
+	t *testing.T, ts testserver.TestServer, app application,
+) (*sql.DB, *url.URL, func()) {
 	t.Helper()
-	if err := ts.Start(); err != nil {
-		t.Fatal(err)
-	}
 	serverURL := ts.PGURL()
 	if serverURL == nil {
 		t.Fatal("url not found")
@@ -84,7 +82,7 @@ func startServerWithApplication(t *testing.T, ts testserver.TestServer, app appl
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := ts.WaitForInit(db); err != nil {
+	if err := ts.WaitForInit(); err != nil {
 		t.Fatal(err)
 	}
 	// Create the database if it does not exist.
