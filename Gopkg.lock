@@ -2,12 +2,12 @@
 
 
 [[projects]]
-  digest = "1:5a880106d5997f6f3b473ccd1dfda09016b1b487bed57e9bd2671abf0390a8bd"
+  digest = "1:d5a35f8c5913203bc381e6bef4300a7cd46c127694a9689b5b65a1532d4ffd9a"
   name = "github.com/cockroachdb/cockroach-go"
   packages = ["testserver"]
   pruneopts = ""
-  revision = "b7c8285b7ed3b7e117851f11bdb56ad33cc16320"
-  version = "v2.0.3"
+  revision = "1973efe4d4c990522391db3fcd7c8cf0fde19c7a"
+  version = "v2.0.4"
 
 [[projects]]
   digest = "1:d5c1692d62c22b9ff5248d1c5f3850d06f7bc850f9ae6eec15c6601f774eef4f"
