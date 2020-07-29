@@ -20,7 +20,7 @@ RUN apt-get install -y postgresql postgresql-contrib libpq-dev git build-essenti
 RUN apt-get install gradle -y
 
 # installations for golang
-RUN curl https://storage.googleapis.com/golang/go1.9.1.linux-amd64.tar.gz -o golang.tar.gz \
+RUN curl https://storage.googleapis.com/golang/go1.14.6.linux-amd64.tar.gz -o golang.tar.gz \
 	&& tar -C /usr/local -xzf golang.tar.gz \
 	&& rm golang.tar.gz
 
