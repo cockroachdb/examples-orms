@@ -3,7 +3,5 @@ start:
 	python3 manage.py migrate cockroach_example && python3 manage.py runserver 6543
 
 deps:
-	git clone https://github.com/cockroachdb/django-cockroachdb || true
 	pip3 install --upgrade setuptools
-	pip3 install django psycopg2
-	cd django-cockroachdb && pip3 install .
+	pip3 install django==3.0.9 django-cockroachdb==3.0.1 psycopg2
