@@ -9,7 +9,7 @@
 
         <!-- Database connection settings -->
         <property name="connection.driver_class">org.postgresql.Driver</property>
-        <property name="connection.url">jdbc:postgresql://127.0.0.1:26257/company_hibernate?sslmode=disable</property>
+        <property name="connection.url">jdbc:postgresql://127.0.0.1:26257/company_java_hibernate?sslmode=disable</property>
         <property name="connection.username">root</property>
 
         <!-- JDBC connection pool (use the built-in) -->
@@ -23,7 +23,7 @@
 
         <!-- Drop and re-create the database schema on startup -->
         <!--<property name="hbm2ddl.auto">validate</property>-->
-        <property name="hbm2ddl.auto">update</property>
+        <property name="hbm2ddl.auto">none</property>
 
         <!-- org.hibernate.HibernateException: No CurrentSessionContext configured! -->
         <property name="hibernate.current_session_context_class">thread</property>
