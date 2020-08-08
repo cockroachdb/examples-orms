@@ -334,6 +334,10 @@ func TestGORM(t *testing.T) {
 	testORM(t, "go", "gorm", defaultTestTableNames, defaultTestColumnNames)
 }
 
+func TestGOPG(t *testing.T) {
+	testORM(t, "go", "gopg", defaultTestTableNames, defaultTestColumnNames)
+}
+
 func TestHibernate(t *testing.T) {
 	testORM(t, "java", "hibernate", defaultTestTableNames, defaultTestColumnNames)
 }
