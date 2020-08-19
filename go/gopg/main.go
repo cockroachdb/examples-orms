@@ -33,7 +33,7 @@ func main() {
 func setupDB(addr string) *pg.DB {
 	opt, err := pg.ParseURL(addr)
 	if err != nil {
-		panic(fmt.Sprintf("failed to parse addr URL: %v", err))
+		panic(fmt.Sprintf("failed to parse addr URL %s: %v", addr, err))
 	}
 	db := pg.Connect(opt)
 	for _, model := range []interface{}{
