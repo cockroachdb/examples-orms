@@ -43,7 +43,7 @@ var customURLSchemes = map[application]string{
 }
 
 type tenantServer interface {
-	NewTenantServer() (testserver.TestServer, error)
+	NewTenantServer(proxy bool) (testserver.TestServer, error)
 }
 
 // newServer creates a new cockroachDB server.
@@ -60,7 +60,7 @@ func newServer(t *testing.T) testserver.TestServer {
 // TestServer.NewTenantServer for more information.
 func newTenant(t *testing.T, ts testserver.TestServer) testserver.TestServer {
 	t.Helper()
-	tenant, err := ts.(tenantServer).NewTenantServer()
+	tenant, err := ts.(tenantServer).NewTenantServer(false /* proxy */)
 	if err != nil {
 		t.Fatal(err)
 	}
