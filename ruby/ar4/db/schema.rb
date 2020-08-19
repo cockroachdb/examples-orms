@@ -14,7 +14,7 @@
 ActiveRecord::Schema.define(version: 20170207160810) do
 
   create_table "customers", id: :bigserial, force: :cascade do |t|
-    t.text "name", null: false
+    t.string "name", null: false
   end
 
 # Could not dump table "order_products" because of following ArgumentError
@@ -24,8 +24,8 @@ ActiveRecord::Schema.define(version: 20170207160810) do
 #   struct size differs
 
   create_table "products", id: :bigserial, force: :cascade do |t|
-    t.text    "name",  null: false
-    t.decimal "price", null: false
+    t.string  "name",                           null: false
+    t.decimal "price", precision: 18, scale: 2, null: false
   end
 
   add_foreign_key "order_products", "orders"

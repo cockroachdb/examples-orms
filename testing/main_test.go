@@ -47,9 +47,15 @@ type tenantServer interface {
 }
 
 // newServer creates a new cockroachDB server.
-func newServer(t *testing.T) testserver.TestServer {
+func newServer(t *testing.T, insecure bool) testserver.TestServer {
 	t.Helper()
-	ts, err := testserver.NewTestServer()
+	var ts testserver.TestServer
+	var err error
+	if insecure {
+		ts, err = testserver.NewTestServer()
+	} else {
+		ts, err = testserver.NewTestServer(testserver.SecureOpt())
+	}
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -196,6 +202,10 @@ type testInfo struct {
 	language, orm string
 	tableNames    testTableNames  // defaults to defaultTestTableNames
 	columnNames   testColumnNames // defaults to defaultTestColumnNames
+	// insecure is set if ORM does not handle secure servers (client certs).
+	// In that case, we start an insecure server (and don't test in tenant
+	// mode).
+	insecure bool
 }
 
 func testORM(t *testing.T, info testInfo) {
@@ -217,7 +227,7 @@ func testORM(t *testing.T, info testInfo) {
 	}
 	var testCases []testCase
 	{
-		ts := newServer(t)
+		ts := newServer(t, info.insecure)
 		db, dbURL, stopDB := startServerWithApplication(t, ts, app)
 		defer stopDB()
 
@@ -345,19 +355,43 @@ func TestGORM(t *testing.T) {
 }
 
 func TestGOPG(t *testing.T) {
-	testORM(t, testInfo{language: "go", orm: "gopg"})
+	testORM(t, testInfo{
+		language: "go",
+		orm:      "gopg",
+		// GoPG does not support client certs:
+		// https://github.com/go-pg/pg/blob/v10/options.go
+		// If we set up a secure deployment and went through the proxy, it would work (or should anyway), but only
+		// via the 'database' parameter; GoPG also does not support the 'options' parameter.
+		insecure: true,
+	})
 }
 
 func TestHibernate(t *testing.T) {
-	testORM(t, testInfo{language: "java", orm: "hibernate"})
+	testORM(t, testInfo{
+		language: "java",
+		orm:      "hibernate",
+		// Possibly does not unescape the path correctly:
+		// Caused by: java.io.FileNotFoundException:
+		//	%2Ftmp%2Fcockroach-testserver913095208%2Fcerts%2Fca.crt (No such file or directory)
+		insecure: true,
+	})
 }
 
 func TestSequelize(t *testing.T) {
-	testORM(t, testInfo{language: "node", orm: "sequelize"})
+	testORM(t, testInfo{
+		language: "node",
+		orm:      "sequelize",
+		// Requires bespoke code to actually use SSL, see:
+		// https://github.com/sequelize/sequelize/issues/10015
+		insecure: true,
+	})
 }
 
 func TestSQLAlchemy(t *testing.T) {
-	testORM(t, testInfo{language: "python", orm: "sqlalchemy"})
+	testORM(t, testInfo{
+		language: "python",
+		orm:      "sqlalchemy",
+	})
 }
 
 func TestDjango(t *testing.T) {
@@ -366,6 +400,9 @@ func TestDjango(t *testing.T) {
 		orm:         "django",
 		tableNames:  djangoTestTableNames,
 		columnNames: djangoTestColumnNames,
+		// No support for client certs (at least not via the query string).
+		// psycopg2.OperationalError: fe_sendauth: no password supplied
+		insecure: true,
 	})
 }
 
