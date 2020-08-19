@@ -25,6 +25,10 @@ type testColumnNames struct {
 	ordersProductsColumns []string
 }
 
+func (tcn testColumnNames) IsEmpty() bool {
+	return len(tcn.customersColumns)+len(tcn.ordersColumns)+len(tcn.productsColumns)+len(tcn.ordersProductsColumns) == 0
+}
+
 // These need to be variables so that their address can be taken.
 var (
 	customerName1 = "Billy"
