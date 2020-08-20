@@ -43,13 +43,19 @@ var customURLSchemes = map[application]string{
 }
 
 type tenantServer interface {
-	NewTenantServer() (testserver.TestServer, error)
+	NewTenantServer(proxy bool) (testserver.TestServer, error)
 }
 
 // newServer creates a new cockroachDB server.
-func newServer(t *testing.T) testserver.TestServer {
+func newServer(t *testing.T, insecure bool) testserver.TestServer {
 	t.Helper()
-	ts, err := testserver.NewTestServer()
+	var ts testserver.TestServer
+	var err error
+	if insecure {
+		ts, err = testserver.NewTestServer()
+	} else {
+		ts, err = testserver.NewTestServer(testserver.SecureOpt())
+	}
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,7 +66,7 @@ func newServer(t *testing.T) testserver.TestServer {
 // TestServer.NewTenantServer for more information.
 func newTenant(t *testing.T, ts testserver.TestServer) testserver.TestServer {
 	t.Helper()
-	tenant, err := ts.(tenantServer).NewTenantServer()
+	tenant, err := ts.(tenantServer).NewTenantServer(false /* proxy */)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -192,12 +198,26 @@ var minRequiredVersionsByORMName = map[string]struct {
 // tenants.
 var minTenantVersion = version.MustParse("v20.2.0-alpha")
 
-func testORM(
-	t *testing.T, language, orm string, tableNames testTableNames, columnNames testColumnNames,
-) {
+type testInfo struct {
+	language, orm string
+	tableNames    testTableNames  // defaults to defaultTestTableNames
+	columnNames   testColumnNames // defaults to defaultTestColumnNames
+	// insecure is set if ORM does not handle secure servers (client certs).
+	// In that case, we start an insecure server (and don't test in tenant
+	// mode).
+	insecure bool
+}
+
+func testORM(t *testing.T, info testInfo) {
+	if info.tableNames == (testTableNames{}) {
+		info.tableNames = defaultTestTableNames
+	}
+	if info.columnNames.IsEmpty() {
+		info.columnNames = defaultTestColumnNames
+	}
 	app := application{
-		language: language,
-		orm:      orm,
+		language: info.language,
+		orm:      info.orm,
 	}
 
 	type testCase struct {
@@ -207,13 +227,13 @@ func testORM(
 	}
 	var testCases []testCase
 	{
-		ts := newServer(t)
+		ts := newServer(t, info.insecure)
 		db, dbURL, stopDB := startServerWithApplication(t, ts, app)
 		defer stopDB()
 
 		crdbVersion := getVersionFromDB(t, db)
 		// Check that this ORM can be run with the given cockroach version.
-		if info, ok := minRequiredVersionsByORMName[orm]; ok {
+		if info, ok := minRequiredVersionsByORMName[info.orm]; ok {
 			if !crdbVersion.AtLeast(info.v) {
 				t.Skip(info.skipMsg)
 			}
@@ -248,8 +268,8 @@ func testORM(
 			td := testDriver{
 				db:          tc.db,
 				dbName:      app.dbName(),
-				tableNames:  tableNames,
-				columnNames: columnNames,
+				tableNames:  info.tableNames,
+				columnNames: info.columnNames,
 			}
 
 			t.Run("FirstRun", func(t *testing.T) {
@@ -331,33 +351,65 @@ func testORM(
 }
 
 func TestGORM(t *testing.T) {
-	testORM(t, "go", "gorm", defaultTestTableNames, defaultTestColumnNames)
+	testORM(t, testInfo{language: "go", orm: "gorm"})
 }
 
 func TestGOPG(t *testing.T) {
-	testORM(t, "go", "gopg", defaultTestTableNames, defaultTestColumnNames)
+	testORM(t, testInfo{
+		language: "go",
+		orm:      "gopg",
+		// GoPG does not support client certs:
+		// https://github.com/go-pg/pg/blob/v10/options.go
+		// If we set up a secure deployment and went through the proxy, it would work (or should anyway), but only
+		// via the 'database' parameter; GoPG also does not support the 'options' parameter.
+		insecure: true,
+	})
 }
 
 func TestHibernate(t *testing.T) {
-	testORM(t, "java", "hibernate", defaultTestTableNames, defaultTestColumnNames)
+	testORM(t, testInfo{
+		language: "java",
+		orm:      "hibernate",
+		// Possibly does not unescape the path correctly:
+		// Caused by: java.io.FileNotFoundException:
+		//	%2Ftmp%2Fcockroach-testserver913095208%2Fcerts%2Fca.crt (No such file or directory)
+		insecure: true,
+	})
 }
 
 func TestSequelize(t *testing.T) {
-	testORM(t, "node", "sequelize", defaultTestTableNames, defaultTestColumnNames)
+	testORM(t, testInfo{
+		language: "node",
+		orm:      "sequelize",
+		// Requires bespoke code to actually use SSL, see:
+		// https://github.com/sequelize/sequelize/issues/10015
+		insecure: true,
+	})
 }
 
 func TestSQLAlchemy(t *testing.T) {
-	testORM(t, "python", "sqlalchemy", defaultTestTableNames, defaultTestColumnNames)
+	testORM(t, testInfo{
+		language: "python",
+		orm:      "sqlalchemy",
+	})
 }
 
 func TestDjango(t *testing.T) {
-	testORM(t, "python", "django", djangoTestTableNames, djangoTestColumnNames)
+	testORM(t, testInfo{
+		language:    "python",
+		orm:         "django",
+		tableNames:  djangoTestTableNames,
+		columnNames: djangoTestColumnNames,
+		// No support for client certs (at least not via the query string).
+		// psycopg2.OperationalError: fe_sendauth: no password supplied
+		insecure: true,
+	})
 }
 
 func TestActiveRecord(t *testing.T) {
-	testORM(t, "ruby", "activerecord", defaultTestTableNames, defaultTestColumnNames)
+	testORM(t, testInfo{language: "ruby", orm: "activerecord"})
 }
 
 func TestActiveRecord4(t *testing.T) {
-	testORM(t, "ruby", "ar4", defaultTestTableNames, defaultTestColumnNames)
+	testORM(t, testInfo{language: "ruby", orm: "ar4"})
 }
