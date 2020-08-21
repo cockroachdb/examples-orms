@@ -369,12 +369,7 @@ FROM
 }
 
 func TestGORM(t *testing.T) {
-	testORM(t, testInfo{
-		language: "go",
-		orm:      "gorm",
-		// TODO(rafi): Test secure mode. See https://github.com/cockroachdb/examples-orms/issues/117)
-		insecure: true,
-	})
+	testORM(t, testInfo{language: "go", orm: "gorm"})
 }
 
 func TestGOPG(t *testing.T) {
@@ -414,8 +409,6 @@ func TestSQLAlchemy(t *testing.T) {
 	testORM(t, testInfo{
 		language: "python",
 		orm:      "sqlalchemy",
-		// TODO(rafi): Test secure mode. See https://github.com/cockroachdb/examples-orms/issues/117)
-		insecure: true,
 	})
 }
 
@@ -432,19 +425,9 @@ func TestDjango(t *testing.T) {
 }
 
 func TestActiveRecord(t *testing.T) {
-	testORM(t, testInfo{
-		language: "ruby",
-		orm:      "activerecord",
-		// TODO(rafi): Test secure mode. See https://github.com/cockroachdb/examples-orms/issues/117)
-		insecure: true,
-	})
+	testORM(t, testInfo{language: "ruby", orm: "activerecord"})
 }
 
 func TestActiveRecord4(t *testing.T) {
-	testORM(t, testInfo{
-		language: "ruby",
-		orm:      "ar4",
-		// TODO(rafi): Test secure mode. See https://github.com/cockroachdb/examples-orms/issues/117)
-		insecure: true,
-	})
+	testORM(t, testInfo{language: "ruby", orm: "ar4"})
 }
