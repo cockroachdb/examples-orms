@@ -193,11 +193,6 @@ var minRequiredVersionsByORMName = map[string]struct {
 	},
 }
 
-// minTenantVersion is the minimum version that supports creating SQL tenants
-// (i.e. the `cockroach mt start-sql command). Earlier versions cannot create
-// tenants.
-var minTenantVersion = version.MustParse("v20.2.0-alpha")
-
 type testInfo struct {
 	language, orm string
 	tableNames    testTableNames  // defaults to defaultTestTableNames
@@ -247,9 +242,14 @@ func testORM(t *testing.T, info testInfo) {
 			},
 		}
 
-		if crdbVersion.AtLeast(minTenantVersion) {
-			// This cockroach version supports creating tenants, add a test case to
-			// run a tenant server.
+		// This cockroach version supports creating tenants, add a test case to
+		// run a tenant server. We need at least 20.1-18 for everything to work out
+		// as the certificate story was reworked immediately before that version
+		// was minted.
+		var tenantsSupported bool
+		if err := db.QueryRow(
+			`select regexp_extract(v, '20\.1-(\d+)')::int > 17 from [ show cluster setting version ] as t(v);`,
+		).Scan(&tenantsSupported); err == nil && tenantsSupported {
 			tenant := newTenant(t, ts)
 			db, dbURL, stopDB := startServerWithApplication(t, tenant, app)
 			defer stopDB()
@@ -259,7 +259,7 @@ func testORM(t *testing.T, info testInfo) {
 				dbURL: dbURL,
 			})
 		} else {
-			t.Logf("not running tenant test case because minimum tenant version check was not satisfied (%s is < %s)", crdbVersion, minTenantVersion)
+			t.Logf("not running tenant test case because minimum tenant version check was not satisfied")
 		}
 	}
 
