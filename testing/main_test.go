@@ -249,7 +249,7 @@ func testORM(t *testing.T, info testInfo) {
 		var tenantsSupported bool
 		if err := db.QueryRow(`
 SELECT
-	(major = 20 AND minor = 1 AND unstable > 17)
+    (major = 20 AND minor = 1 AND (unstable IS NOT NULL AND unstable > 17))
 	OR (major = 20 AND minor > 1)
 	OR (major > 20)
 FROM
