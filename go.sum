@@ -1,6 +1,6 @@
 github.com/cockroachdb/apd v1.1.0/go.mod h1:8Sl8LxpKi29FqWXR16WEFZRNSz3SoPzUzeMeY4+DwBQ=
-github.com/cockroachdb/cockroach-go/v2 v2.0.6 h1:7JKIGouLq/hP+rxHIZ1emZ0J3AXPt8DE7yU/xw8JZPc=
-github.com/cockroachdb/cockroach-go/v2 v2.0.6/go.mod h1:nkf7rUmgPdawp3EwRjXIumihI2AYg9usGNWbJ2hsJqI=
+github.com/cockroachdb/cockroach-go/v2 v2.0.7-0.20200903114400-4bf206d91533 h1:FrTWuMCYMkwme38Us67F6VK5xSF1/iLlasSJR8EIhIg=
+github.com/cockroachdb/cockroach-go/v2 v2.0.7-0.20200903114400-4bf206d91533/go.mod h1:nkf7rUmgPdawp3EwRjXIumihI2AYg9usGNWbJ2hsJqI=
 github.com/codemodus/kace v0.5.1 h1:4OCsBlE2c/rSJo375ggfnucv9eRzge/U5LrrOZd47HA=
 github.com/codemodus/kace v0.5.1/go.mod h1:coddaHoX1ku1YFSe4Ip0mL9kQjJvKkzb9CfIdG1YR04=
 github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e/go.mod h1:F5haX7vjVVG0kc13fIWeqUViNPyEJxv/OmvnBo0Yme4=
@@ -187,6 +187,7 @@ golang.org/x/text v0.3.2 h1:tW2bmiBqwgJj/UpqtC8EpXEZVYOwU0yG4iWbprSVAcs=
 golang.org/x/text v0.3.2/go.mod h1:bEr9sfX3Q8Zfm5fL9x+3itogRgK3+ptLWKqgva+5dAk=
 golang.org/x/tools v0.0.0-20180917221912-90fa682c2a6e/go.mod h1:n7NCudcB/nEzxVGmLbDWY5pfWTLqBcC2KZ6jyYvM4mQ=
 golang.org/x/tools v0.0.0-20190425163242-31fd60d6bfdc/go.mod h1:RgjU9mgBXZiqYHBnxXauZ1Gv1EHHAz9KjViQ78xBX0Q=
+golang.org/x/tools v0.0.0-20190823170909-c4a336ef6a2f h1:ESK9Jb5JOE+y4u+ozMQeXfMHwEHm6zVbaDQkeaj6wI4=
 golang.org/x/tools v0.0.0-20190823170909-c4a336ef6a2f/go.mod h1:b+2E5dAYhXwXZwtnZ6UAqBI28+e2cm9otk0dWdXHAEo=
 golang.org/x/xerrors v0.0.0-20190410155217-1f06c39b4373/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 golang.org/x/xerrors v0.0.0-20190513163551-3ee3066db522/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
