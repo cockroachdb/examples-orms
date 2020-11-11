@@ -45,7 +45,7 @@ class CustomersView(View):
             customers = list(Customers.objects.filter(id=id).values())
         return JsonResponse(customers, safe=False)
 
-    @retry_on_exception(3)
+    @retry_on_exception
     @atomic
     def post(self, request, *args, **kwargs):
         form_data = json.loads(request.body.decode())
@@ -54,7 +54,7 @@ class CustomersView(View):
         c.save()
         return HttpResponse(status=200)
 
-    @retry_on_exception(3)
+    @retry_on_exception
     @atomic
     def delete(self, request, id=None, *args, **kwargs):
         if id is None:
@@ -74,7 +74,7 @@ class ProductView(View):
             products = list(Products.objects.filter(id=id).values())
         return JsonResponse(products, safe=False)
 
-    @retry_on_exception(3)
+    @retry_on_exception
     @atomic
     def post(self, request, *args, **kwargs):
         form_data = json.loads(request.body.decode())
@@ -95,7 +95,7 @@ class OrdersView(View):
             orders = list(Orders.objects.filter(id=id).values())
         return JsonResponse(orders, safe=False)
     
-    @retry_on_exception(3)
+    @retry_on_exception
     @atomic
     def post(self, request, *args, **kwargs):
         form_data = json.loads(request.body.decode())
