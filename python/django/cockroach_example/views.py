@@ -13,6 +13,8 @@ import time
 from .models import *
 
 # Warning: Do not use retry_on_exception in an inner nested transaction.
+
+
 def retry_on_exception(view, num_retries=3, on_failure=HttpResponse(status=500), delay_=0.5, backoff_=1.5):
     @wraps(view)
     def retry(*args, **kwargs):
@@ -32,9 +34,11 @@ def retry_on_exception(view, num_retries=3, on_failure=HttpResponse(status=500),
                 return on_failure
     return retry
 
+
 class PingView(View):
     def get(self, request, *args, **kwargs):
         return HttpResponse("python/django", status=200)
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class CustomersView(View):
@@ -61,9 +65,10 @@ class CustomersView(View):
             return HttpResponse(status=404)
         Customers.objects.filter(id=id).delete()
         return HttpResponse(status=200)
-    
+
     # The PUT method is shadowed by the POST method, so there doesn't seem
     # to be a reason to include it.
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ProductView(View):
@@ -86,6 +91,7 @@ class ProductView(View):
     # The REST API outlined in the github does not say that /product/ needs
     # a PUT and DELETE method
 
+
 @method_decorator(csrf_exempt, name='dispatch')
 class OrdersView(View):
     def get(self, request, id=None, *args, **kwargs):
@@ -94,7 +100,7 @@ class OrdersView(View):
         else:
             orders = list(Orders.objects.filter(id=id).values())
         return JsonResponse(orders, safe=False)
-    
+
     @retry_on_exception
     @atomic
     def post(self, request, *args, **kwargs):
