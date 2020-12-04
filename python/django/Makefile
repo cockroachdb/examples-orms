@@ -4,4 +4,4 @@ start:
 
 deps:
 	pip3 install --upgrade setuptools
-	pip3 install django==3.0.9 django-cockroachdb==3.0.1 psycopg2
+	pip3 install django==3.1.4 django-cockroachdb==3.1.2 psycopg2
