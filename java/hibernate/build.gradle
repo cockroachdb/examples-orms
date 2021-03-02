@@ -13,7 +13,7 @@ repositories {
 dependencies {
     // Necessary for Hibernate.
     compile 'org.hibernate:hibernate-core:5.2.4.Final'
-    compile 'org.postgresql:postgresql:9.4.1208'
+    compile 'org.postgresql:postgresql:42.2.19'
 
     // Necessary for web application.
     compile 'org.glassfish.jersey.core:jersey-server:2.25'
