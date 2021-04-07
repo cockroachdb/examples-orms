@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"github.com/cockroachdb/examples-orms/go/gopg/model"
-	"github.com/go-pg/pg/v9"
+	"github.com/go-pg/pg/v10"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -65,7 +65,7 @@ func (s *Server) createCustomer(w http.ResponseWriter, r *http.Request, ps httpr
 		return
 	}
 
-	if err := s.db.Insert(&customer); err != nil {
+	if _, err := s.db.Model(&customer).Insert(); err != nil {
 		http.Error(w, err.Error(), errToStatusCode(err))
 	} else {
 		writeJSONResult(w, customer)
@@ -80,7 +80,7 @@ func (s *Server) getCustomer(w http.ResponseWriter, r *http.Request, ps httprout
 	customer := model.Customer{
 		ID: customerID,
 	}
-	if err := s.db.Select(&customer); err != nil {
+	if err := s.db.Model(&customer).Select(); err != nil {
 		http.Error(w, err.Error(), errToStatusCode(err))
 	} else {
 		writeJSONResult(w, customer)
@@ -99,7 +99,7 @@ func (s *Server) updateCustomer(w http.ResponseWriter, r *http.Request, ps httpr
 		http.Error(w, err.Error(), errToStatusCode(err))
 	}
 	customer.ID = customerID
-	if err := s.db.Update(&customer); err != nil {
+	if _, err := s.db.Model(&customer).Update(); err != nil {
 		http.Error(w, err.Error(), errToStatusCode(err))
 	} else {
 		writeJSONResult(w, customer)
@@ -140,7 +140,7 @@ func (s *Server) createProduct(w http.ResponseWriter, r *http.Request, ps httpro
 		return
 	}
 
-	if err := s.db.Insert(&product); err != nil {
+	if _, err := s.db.Model(&product).Insert(); err != nil {
 		http.Error(w, err.Error(), errToStatusCode(err))
 	} else {
 		writeJSONResult(w, product)
@@ -155,7 +155,7 @@ func (s *Server) getProduct(w http.ResponseWriter, r *http.Request, ps httproute
 	product := model.Product{
 		ID: productID,
 	}
-	if err := s.db.Select(&product); err != nil {
+	if err := s.db.Model(&product).Select(); err != nil {
 		http.Error(w, err.Error(), errToStatusCode(err))
 	} else {
 		writeJSONResult(w, product)
@@ -174,7 +174,7 @@ func (s *Server) updateProduct(w http.ResponseWriter, r *http.Request, ps httpro
 		http.Error(w, err.Error(), errToStatusCode(err))
 	}
 	product.ID = productID
-	if err := s.db.Update(&product); err != nil {
+	if _, err := s.db.Model(&product).Update(); err != nil {
 		http.Error(w, err.Error(), errToStatusCode(err))
 	} else {
 		writeJSONResult(w, product)
@@ -235,14 +235,14 @@ func (s *Server) createOrder(w http.ResponseWriter, r *http.Request, _ httproute
 		}
 	}
 
-	if err := s.db.Insert(&order); err != nil {
+	if _, err := s.db.Model(&order).Insert(); err != nil {
 		http.Error(w, err.Error(), errToStatusCode(err))
 	} else {
 		for _, product := range order.Products {
 			var orderProduct model.OrderProduct
 			orderProduct.Order = order
 			orderProduct.Product = product
-			if err := s.db.Insert(&orderProduct); err != nil {
+			if _, err := s.db.Model(&orderProduct).Insert(); err != nil {
 				http.Error(w, err.Error(), errToStatusCode(err))
 			}
 		}
@@ -258,7 +258,7 @@ func (s *Server) getOrder(w http.ResponseWriter, r *http.Request, ps httprouter.
 	order := model.Order{
 		ID: orderID,
 	}
-	if err := s.db.Select(&order); err != nil {
+	if err := s.db.Model(&order).Select(); err != nil {
 		http.Error(w, err.Error(), errToStatusCode(err))
 	} else {
 		writeJSONResult(w, order)
@@ -277,7 +277,7 @@ func (s *Server) updateOrder(w http.ResponseWriter, r *http.Request, ps httprout
 		http.Error(w, err.Error(), errToStatusCode(err))
 	}
 	order.ID = orderID
-	if err := s.db.Update(&order); err != nil {
+	if _, err := s.db.Model(&order).Update(); err != nil {
 		http.Error(w, err.Error(), errToStatusCode(err))
 	} else {
 		writeJSONResult(w, order)
@@ -315,7 +315,7 @@ func (s *Server) addProductToOrder(w http.ResponseWriter, r *http.Request, ps ht
 	order := model.Order{
 		ID: orderID,
 	}
-	if err := s.db.Select(&order); err != nil {
+	if err := s.db.Model(&order).Select(); err != nil {
 		tx.Rollback()
 		http.Error(w, err.Error(), errToStatusCode(err))
 		return
@@ -336,14 +336,14 @@ func (s *Server) addProductToOrder(w http.ResponseWriter, r *http.Request, ps ht
 	addedProduct := model.Product{
 		ID: productID,
 	}
-	if err := s.db.Select(&addedProduct); err != nil {
+	if err := s.db.Model(&addedProduct).Select(); err != nil {
 		tx.Rollback()
 		http.Error(w, err.Error(), errToStatusCode(err))
 		return
 	}
 
 	order.Products = append(order.Products, addedProduct)
-	if err := tx.Insert(&order); err != nil {
+	if _, err := tx.Model(&order).Insert(); err != nil {
 		tx.Rollback()
 		http.Error(w, err.Error(), errToStatusCode(err))
 		return
@@ -352,7 +352,7 @@ func (s *Server) addProductToOrder(w http.ResponseWriter, r *http.Request, ps ht
 		Order:   order,
 		Product: addedProduct,
 	}
-	if err := tx.Insert(&orderProduct); err != nil {
+	if _, err := tx.Model(&orderProduct).Insert(); err != nil {
 		tx.Rollback()
 		http.Error(w, err.Error(), errToStatusCode(err))
 		return
