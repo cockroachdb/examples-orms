@@ -23,4 +23,4 @@ start:
 deps:
 	# To avoid permissions errors, the following should be run in a virtualenv
 	# (preferred) or as root.
-	pip3 install flask-sqlalchemy==2.4.4 sqlalchemy-cockroachdb==1.3.1 psycopg2
+	pip3 install flask-sqlalchemy==2.5.1 sqlalchemy-cockroachdb==1.3.2 psycopg2
