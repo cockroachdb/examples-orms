@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	"github.com/cockroachdb/examples-orms/go/gorm/model"
-	"github.com/jinzhu/gorm"
 	"github.com/julienschmidt/httprouter"
+	"gorm.io/gorm"
 )
 
 // Server is an http server that handles REST requests.
@@ -87,8 +87,7 @@ func (s *Server) updateCustomer(w http.ResponseWriter, r *http.Request, ps httpr
 		return
 	}
 
-	customerID := ps.ByName("customerID")
-	if err := s.db.Model(&customer).Where("ID = ?", customerID).Update(customer).Error; err != nil {
+	if err := s.db.Save(customer).Error; err != nil {
 		http.Error(w, err.Error(), errToStatusCode(err))
 	} else {
 		writeJSONResult(w, customer)
@@ -146,8 +145,7 @@ func (s *Server) updateProduct(w http.ResponseWriter, r *http.Request, ps httpro
 		return
 	}
 
-	productID := ps.ByName("productID")
-	if err := s.db.Model(&product).Where("ID = ?", productID).Update(product).Error; err != nil {
+	if err := s.db.Save(product).Error; err != nil {
 		http.Error(w, err.Error(), errToStatusCode(err))
 	} else {
 		writeJSONResult(w, product)
@@ -225,8 +223,7 @@ func (s *Server) updateOrder(w http.ResponseWriter, r *http.Request, ps httprout
 		return
 	}
 
-	orderID := ps.ByName("orderID")
-	if err := s.db.Model(&order).Where("ID = ?", orderID).Update(order).Error; err != nil {
+	if err := s.db.Model(&order).Save(order).Error; err != nil {
 		http.Error(w, err.Error(), errToStatusCode(err))
 	} else {
 		writeJSONResult(w, order)

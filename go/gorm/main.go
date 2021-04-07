@@ -7,9 +7,9 @@ import (
 	"net/http"
 
 	"github.com/cockroachdb/examples-orms/go/gorm/model"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/julienschmidt/httprouter"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 var (
@@ -20,7 +20,6 @@ func main() {
 	flag.Parse()
 
 	db := setupDB(*addr)
-	defer db.Close()
 
 	router := httprouter.New()
 
@@ -31,7 +30,7 @@ func main() {
 }
 
 func setupDB(addr string) *gorm.DB {
-	db, err := gorm.Open("postgres", addr)
+	db, err := gorm.Open(postgres.Open(addr))
 	if err != nil {
 		panic(fmt.Sprintf("failed to connect to database: %v", err))
 	}

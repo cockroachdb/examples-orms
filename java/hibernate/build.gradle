@@ -12,7 +12,7 @@ repositories {
 
 dependencies {
     // Necessary for Hibernate.
-    compile 'org.hibernate:hibernate-core:5.2.4.Final'
+    compile 'org.hibernate:hibernate-core:5.4.30.Final'
     compile 'org.postgresql:postgresql:42.2.19'
 
     // Necessary for web application.
