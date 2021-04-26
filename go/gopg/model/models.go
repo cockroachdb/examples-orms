@@ -11,7 +11,7 @@ type Order struct {
 	ID       int     `json:"id,omitempty"`
 	Subtotal float64 `json:"subtotal,string" pg:"type:'decimal(18,2)'"`
 
-	Customer   Customer `json:"customer" pg:"fk:customer_id"`
+	Customer   Customer `json:"customer" pg:"fk:customer_id,rel:has-one"`
 	CustomerID int      `json:"-"`
 
 	Products []Product `json:"products" pg:"many2many:order_products"`
@@ -26,9 +26,9 @@ type Product struct {
 
 // OrderProduct is a model in the "order_products" table.
 type OrderProduct struct {
-	Order   Order `json:"order" pg:"fk:order_id,on_delete:CASCADE"`
+	Order   Order `json:"order" pg:"fk:order_id,on_delete:CASCADE,rel:has-one"`
 	OrderID int   `json:"-"`
 
-	Product   Product `json:"product" pg:"fk:product_id"`
+	Product   Product `json:"product" pg:"fk:product_id,rel:has-one"`
 	ProductID int     `json:"-"`
 }

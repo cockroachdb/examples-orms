@@ -7,8 +7,8 @@ import (
 	"net/http"
 
 	"github.com/cockroachdb/examples-orms/go/gopg/model"
-	"github.com/go-pg/pg/v9"
-	"github.com/go-pg/pg/v9/orm"
+	"github.com/go-pg/pg/v10"
+	"github.com/go-pg/pg/v10/orm"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -36,13 +36,18 @@ func setupDB(addr string) *pg.DB {
 		panic(fmt.Sprintf("failed to parse addr URL %s: %v", addr, err))
 	}
 	db := pg.Connect(opt)
+
+	// Need to register OrderProduct before creating it because Order references
+	// it.
+	orm.RegisterTable((*model.OrderProduct)(nil))
+
 	for _, model := range []interface{}{
 		(*model.Customer)(nil),
 		(*model.Order)(nil),
 		(*model.Product)(nil),
 		(*model.OrderProduct)(nil),
 	} {
-		err := db.CreateTable(model, &orm.CreateTableOptions{
+		err := db.Model(model).CreateTable(&orm.CreateTableOptions{
 			IfNotExists:   true,
 			FKConstraints: true,
 		})
