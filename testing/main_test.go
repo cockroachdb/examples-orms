@@ -184,8 +184,8 @@ var minRequiredVersionsByORMName = map[string]struct {
 	skipMsg string
 }{
 	"django": {
-		v:       version.MustParse("v19.1.0-alpha"),
-		skipMsg: "TestDjango fails on CRDB <=v2.1 due to missing foreign key support.",
+		v:       version.MustParse("v20.2.0-alpha"),
+		skipMsg: "TestDjango fails on CRDB <=v20.1 due to changes in SHOW TABLES.",
 	},
 	"activerecord": {
 		v:       version.MustParse("v19.2.0-alpha"),
