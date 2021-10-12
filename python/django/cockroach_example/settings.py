@@ -90,6 +90,7 @@ DATABASES = {
         'PASSWORD': '',
         'HOST' : 'localhost',
         'PORT' : port,
+        'DISABLE_COCKROACHDB_TELEMETRY' : True,
     }
 }
 

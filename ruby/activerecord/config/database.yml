@@ -3,6 +3,7 @@ default: &default
   port: 26257
   host: localhost
   user: root
+  disable_cockroachdb_telemetry: true
   #pool: 5
   #timeout: 5000
 

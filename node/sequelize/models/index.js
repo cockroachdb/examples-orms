@@ -2,7 +2,9 @@
 
 var fs        = require('fs');
 var Sequelize = require('sequelize-cockroachdb');
-var sequelize = new Sequelize(process.env.ADDR, {});
+var sequelize = new Sequelize(process.env.ADDR, {
+  dialectOptions: {cockroachdbTelemetryDisabled : true}
+});
 var DataTypes = Sequelize.DataTypes;
 
 if (!Sequelize.supportsCockroachDB) {
