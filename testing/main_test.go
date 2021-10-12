@@ -427,7 +427,3 @@ func TestDjango(t *testing.T) {
 func TestActiveRecord(t *testing.T) {
 	testORM(t, testInfo{language: "ruby", orm: "activerecord"})
 }
-
-func TestActiveRecord4(t *testing.T) {
-	testORM(t, testInfo{language: "ruby", orm: "ar4"})
-}
