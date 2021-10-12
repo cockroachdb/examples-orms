@@ -13,7 +13,7 @@
 # permissions and limitations under the License. See the AUTHORS file
 # for names of contributors.
 
-ADDR ?= cockroachdb://root@localhost:26257/company_sqlalchemy?sslmode=disable
+ADDR ?= cockroachdb://root@localhost:26257/company_sqlalchemy?sslmode=disable&disable_cockroachdb_telemetry=true
 
 .PHONY: start
 start:
@@ -23,4 +23,4 @@ start:
 deps:
 	# To avoid permissions errors, the following should be run in a virtualenv
 	# (preferred) or as root.
-	pip3 install flask-sqlalchemy==2.5.1 sqlalchemy-cockroachdb==1.3.2 psycopg2
+	pip3 install flask-sqlalchemy==2.5.1 sqlalchemy-cockroachdb==1.4.1 psycopg2
