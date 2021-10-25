@@ -15,7 +15,7 @@ router.get('/', function(req, res, next) {
 // POST a new order to the database.
 router.post('/', function(req, res, next) {
   var o = {
-    id: parseInt(req.body.id),
+    id: req.body.id,
     subtotal: parseFloat(req.body.subtotal),
     customer_id: parseInt(req.body.customer.id)
   };
