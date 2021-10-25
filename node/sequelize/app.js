@@ -9,7 +9,7 @@ var app = express();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
-app.use(bodyParser({type: "*/*"}));
+app.use(bodyParser.json({type: "*/*"}));
 app.use('/', require('./routes/index'));
 app.use('/customer', require('./routes/customer'));
 app.use('/order', require('./routes/order'));
