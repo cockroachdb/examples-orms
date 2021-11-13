@@ -474,20 +474,14 @@ func TestSQLAlchemy(t *testing.T) {
 }
 
 func TestDjango(t *testing.T) {
-	testORMForAuthModesExcept(t, testInfo{
-		language:    "python",
-		orm:         "django",
-		tableNames:  djangoTestTableNames,
-		columnNames: djangoTestColumnNames,
-	},
-		map[authMode]string{
-			// No support for client certs (at least not via the query string).
-			// psycopg2.OperationalError: fe_sendauth: no password supplied
-			//authClientCert: "client certs via query string unsupported",
-			// Ditto,
-			// psycopg2.OperationalError: fe_sendauth: no password supplied
-			//authPassword: "password via query string unsupported",
-		},
+	testORMForAuthModesExcept(
+		t,
+		testInfo{
+			language:    "python",
+			orm:         "django",
+			tableNames:  djangoTestTableNames,
+			columnNames: djangoTestColumnNames,
+		}, nothingSkipped(),
 	)
 }
 
