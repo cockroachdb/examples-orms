@@ -53,11 +53,11 @@ func newServer(t *testing.T, auth authMode) testserver.TestServer {
 	var err error
 	switch auth {
 	case authClientCert:
-		ts, err = testserver.NewTestServer(testserver.SecureOpt())
+		ts, err = testserver.NewTestServer(testserver.SecureOpt(), testserver.NonStableDbOpt())
 	case authPassword:
-		ts, err = testserver.NewTestServer(testserver.SecureOpt(), testserver.RootPasswordOpt("hunter2"))
+		ts, err = testserver.NewTestServer(testserver.SecureOpt(), testserver.RootPasswordOpt("hunter2"), testserver.NonStableDbOpt())
 	case authInsecure:
-		ts, err = testserver.NewTestServer()
+		ts, err = testserver.NewTestServer(testserver.NonStableDbOpt())
 	default:
 		err = fmt.Errorf("unknown authMode %d", auth)
 	}
