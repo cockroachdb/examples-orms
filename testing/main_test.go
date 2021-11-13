@@ -429,8 +429,8 @@ func TestGOPG(t *testing.T) {
 			// via the 'database' parameter; GoPG also does not support the 'options' parameter.
 			//
 			// pg: options other than 'sslmode', 'application_name' and 'connect_timeout' are not supported
-			authClientCert: "GoPG does not support custom root cert",
-			authPassword:   "GoPG does not support custom root cert",
+			//authClientCert: "GoPG does not support custom root cert",
+			//authPassword:   "GoPG does not support custom root cert",
 		})
 }
 
@@ -449,10 +449,10 @@ func TestHibernate(t *testing.T) {
 			// then we run into
 			//   https://github.com/dbeaver/dbeaver/issues/1835
 			// because hibernate expects the key in DER format, but it is PEM.
-			authClientCert: "needs DER format and unescaped query string",
+			//authClientCert: "needs DER format and unescaped query string",
 			// Doesn't seem to understand connection strings.
 			// Caused by: java.net.UnknownHostException: root:hunter2@localhost
-			authPassword: "needs custom setup for password support",
+			//authPassword: "needs custom setup for password support",
 		},
 	)
 }
@@ -463,8 +463,8 @@ func TestSequelize(t *testing.T) {
 		map[authMode]string{
 			// Requires bespoke code to actually use SSL, see:
 			// https://github.com/sequelize/sequelize/issues/10015
-			authClientCert: "needs custom SSL setup",
-			authPassword:   "needs custom SSL setup",
+			//authClientCert: "needs custom SSL setup",
+			//authPassword:   "needs custom SSL setup",
 		},
 	)
 }
@@ -483,10 +483,10 @@ func TestDjango(t *testing.T) {
 		map[authMode]string{
 			// No support for client certs (at least not via the query string).
 			// psycopg2.OperationalError: fe_sendauth: no password supplied
-			authClientCert: "client certs via query string unsupported",
+			//authClientCert: "client certs via query string unsupported",
 			// Ditto,
 			// psycopg2.OperationalError: fe_sendauth: no password supplied
-			authPassword: "password via query string unsupported",
+			//authPassword: "password via query string unsupported",
 		},
 	)
 }
