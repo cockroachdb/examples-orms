@@ -485,19 +485,6 @@ func TestDjango(t *testing.T) {
 	)
 }
 
-// TODO(rafiss): why can't I run the ActiveRecords tests manually
-// with this invocation?
-//
-//   ./docker.sh make deps
-//   ./docker.sh go test -v -run ActiveRecord ./testing
-//
-// It always fails opaquely like this (after some normal-looking output):
-//
-//   => Run `rails server -h` for more startup options
-//   Exiting
-//   make: *** [Makefile:23: start] Error 1
-//
-
 func TestActiveRecord(t *testing.T) {
 	testORMForAuthModesExcept(t, testInfo{language: "ruby", orm: "activerecord"}, nothingSkipped())
 }
