@@ -435,26 +435,7 @@ func TestGOPG(t *testing.T) {
 }
 
 func TestHibernate(t *testing.T) {
-	testORMForAuthModesExcept(t,
-		testInfo{language: "java", orm: "hibernate"},
-		map[authMode]string{
-			// Driver does not unescape the path correctly:
-			// Caused by: java.io.FileNotFoundException:
-			//	%2Ftmp%2Fcockroach-testserver913095208%2Fcerts%2Fca.crt (No such file or directory)
-			//
-			// Furthermore, if we preprocess the query string via
-			//
-			//    tc.dbURL.RawQuery, err = url.QueryUnescape(tc.dbURL.RawQuery)
-			//
-			// then we run into
-			//   https://github.com/dbeaver/dbeaver/issues/1835
-			// because hibernate expects the key in DER format, but it is PEM.
-			//authClientCert: "needs DER format and unescaped query string",
-			// Doesn't seem to understand connection strings.
-			// Caused by: java.net.UnknownHostException: root:hunter2@localhost
-			//authPassword: "needs custom setup for password support",
-		},
-	)
+	testORMForAuthModesExcept(t, testInfo{language: "java", orm: "hibernate"}, nothingSkipped())
 }
 
 func TestSequelize(t *testing.T) {
