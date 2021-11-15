@@ -439,15 +439,7 @@ func TestHibernate(t *testing.T) {
 }
 
 func TestSequelize(t *testing.T) {
-	testORMForAuthModesExcept(t,
-		testInfo{language: "node", orm: "sequelize"},
-		map[authMode]string{
-			// Requires bespoke code to actually use SSL, see:
-			// https://github.com/sequelize/sequelize/issues/10015
-			//authClientCert: "needs custom SSL setup",
-			//authPassword:   "needs custom SSL setup",
-		},
-	)
+	testORMForAuthModesExcept(t, testInfo{language: "node", orm: "sequelize"}, nothingSkipped())
 }
 
 func TestSQLAlchemy(t *testing.T) {
@@ -469,4 +461,3 @@ func TestDjango(t *testing.T) {
 func TestActiveRecord(t *testing.T) {
 	testORMForAuthModesExcept(t, testInfo{language: "ruby", orm: "activerecord"}, nothingSkipped())
 }
-
