@@ -429,8 +429,8 @@ func TestGOPG(t *testing.T) {
 			// via the 'database' parameter; GoPG also does not support the 'options' parameter.
 			//
 			// pg: options other than 'sslmode', 'application_name' and 'connect_timeout' are not supported
-			//authClientCert: "GoPG does not support custom root cert",
-			//authPassword:   "GoPG does not support custom root cert",
+			authClientCert: "GoPG does not support custom root cert",
+			authPassword:   "GoPG does not support custom root cert",
 		})
 }
 
