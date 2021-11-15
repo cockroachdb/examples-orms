@@ -36,7 +36,9 @@ func setupDB(addr string) *gorm.DB {
 	}
 
 	// Migrate the schema
-	db.AutoMigrate(&model.Customer{}, &model.Order{}, &model.Product{})
+	if err := db.AutoMigrate(&model.Customer{}, &model.Order{}, &model.Product{}); err != nil {
+		panic(err)
+	}
 
 	return db
 }
