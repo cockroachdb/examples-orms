@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
+import dj_database_url
 import os
 
 from urllib.parse import urlparse
@@ -76,24 +77,21 @@ WSGI_APPLICATION = 'cockroach_example.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
-port = 26257
+DATABASES = {}
 addr = os.getenv('ADDR')
 if addr is not None:
     url = urlparse(addr)
-    port = url.port
-
-DATABASES = {
-    'default': {
+    DATABASES['default'] = dj_database_url.config(default=addr, engine='django_cockroachdb')
+    DATABASES['default']['DISABLE_COCKROACHDB_TELEMETRY'] = True
+else:
+    DATABASES['default'] = {
         'ENGINE' : 'django_cockroachdb',
         'NAME' : 'company_django',
         'USER' : 'root',
-        'PASSWORD': '',
         'HOST' : 'localhost',
-        'PORT' : port,
+        'PORT' : 26257,
         'DISABLE_COCKROACHDB_TELEMETRY' : True,
     }
-}
-
 
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators

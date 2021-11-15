@@ -16,7 +16,7 @@
         <property name="connection.pool_size">16</property>
 
         <!-- SQL dialect -->
-        <property name="dialect">org.hibernate.dialect.PostgreSQL94Dialect</property>
+        <property name="dialect">org.hibernate.dialect.CockroachDB201Dialect</property>
 
         <!-- Echo all executed SQL to stdout -->
         <property name="show_sql">true</property>

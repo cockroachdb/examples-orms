@@ -47,14 +47,19 @@ type tenantServer interface {
 }
 
 // newServer creates a new cockroachDB server.
-func newServer(t *testing.T, insecure bool) testserver.TestServer {
+func newServer(t *testing.T, auth authMode) testserver.TestServer {
 	t.Helper()
 	var ts testserver.TestServer
 	var err error
-	if insecure {
-		ts, err = testserver.NewTestServer()
-	} else {
-		ts, err = testserver.NewTestServer(testserver.SecureOpt())
+	switch auth {
+	case authClientCert:
+		ts, err = testserver.NewTestServer(testserver.SecureOpt(), testserver.NonStableDbOpt())
+	case authPassword:
+		ts, err = testserver.NewTestServer(testserver.SecureOpt(), testserver.RootPasswordOpt("hunter2"), testserver.NonStableDbOpt())
+	case authInsecure:
+		ts, err = testserver.NewTestServer(testserver.NonStableDbOpt())
+	default:
+		err = fmt.Errorf("unknown authMode %d", auth)
 	}
 	if err != nil {
 		t.Fatal(err)
@@ -64,9 +69,9 @@ func newServer(t *testing.T, insecure bool) testserver.TestServer {
 
 // newTenant creates a new SQL Tenant pointed at the given TestServer. See
 // TestServer.NewTenantServer for more information.
-func newTenant(t *testing.T, ts testserver.TestServer) testserver.TestServer {
+func newTenant(t *testing.T, ts testserver.TestServer, proxy bool) testserver.TestServer {
 	t.Helper()
-	tenant, err := ts.(tenantServer).NewTenantServer(false /* proxy */)
+	tenant, err := ts.(tenantServer).NewTenantServer(proxy)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -193,17 +198,39 @@ var minRequiredVersionsByORMName = map[string]struct {
 	},
 }
 
+type authMode byte
+
+const (
+	// Use client certs. When testing tenants, does not use the proxy (as the proxy does not support client certs).
+	authClientCert authMode = iota
+	// Use password auth. When testing tenants, tests through a proxy.
+	authPassword
+	// Use --insecure. When testing tenants, does not use the proxy (as the proxy does not support insecure connections).
+	authInsecure
+
+	authModeSentinel // sentinel to iterate over all modes
+)
+
+func (mode authMode) String() string {
+	switch mode {
+	case authClientCert:
+		return "client-cert"
+	case authPassword:
+		return "password"
+	case authInsecure:
+		return "insecure"
+	default:
+		return "unknown"
+	}
+}
+
 type testInfo struct {
 	language, orm string
 	tableNames    testTableNames  // defaults to defaultTestTableNames
 	columnNames   testColumnNames // defaults to defaultTestColumnNames
-	// insecure is set if ORM does not handle secure servers (client certs).
-	// In that case, we start an insecure server (and don't test in tenant
-	// mode).
-	insecure bool
 }
 
-func testORM(t *testing.T, info testInfo) {
+func testORM(t *testing.T, info testInfo, auth authMode) {
 	if info.tableNames == (testTableNames{}) {
 		info.tableNames = defaultTestTableNames
 	}
@@ -222,7 +249,7 @@ func testORM(t *testing.T, info testInfo) {
 	}
 	var testCases []testCase
 	{
-		ts := newServer(t, info.insecure)
+		ts := newServer(t, auth)
 		db, dbURL, stopDB := startServerWithApplication(t, ts, app)
 		defer stopDB()
 
@@ -268,11 +295,19 @@ FROM
 			t.Fatalf("unable to read cluster version: %s", err)
 		}
 		if tenantsSupported {
-			tenant := newTenant(t, ts)
+			// Connect to the tenant through the SQL proxy, which is only supported
+			// when using secure+password auth. (The proxy does not support client
+			// certs or insecure connections).
+			proxySupported := auth == authPassword
+			name := "RegularTenant"
+			if proxySupported {
+				name += "ThroughProxy"
+			}
+			tenant := newTenant(t, ts, proxySupported)
 			db, dbURL, stopDB := startServerWithApplication(t, tenant, app)
 			defer stopDB()
 			testCases = append(testCases, testCase{
-				name:  "RegularTenant",
+				name:  name,
 				db:    db,
 				dbURL: dbURL,
 			})
@@ -368,62 +403,61 @@ FROM
 	}
 }
 
+func testORMForAuthModesExcept(t *testing.T, info testInfo, skips map[authMode]string /* mode -> reason */) {
+	for auth := authMode(0); auth < authModeSentinel; auth++ {
+		t.Run(fmt.Sprint(auth), func(t *testing.T) {
+			if msg := skips[auth]; msg != "" {
+				t.Skip(msg)
+			}
+			testORM(t, info, auth)
+		})
+	}
+}
+
+func nothingSkipped() map[authMode]string { return nil }
+
 func TestGORM(t *testing.T) {
-	testORM(t, testInfo{language: "go", orm: "gorm"})
+	testORMForAuthModesExcept(t, testInfo{language: "go", orm: "gorm"}, nothingSkipped())
 }
 
 func TestGOPG(t *testing.T) {
-	testORM(t, testInfo{
-		language: "go",
-		orm:      "gopg",
-		// GoPG does not support client certs:
-		// https://github.com/go-pg/pg/blob/v10/options.go
-		// If we set up a secure deployment and went through the proxy, it would work (or should anyway), but only
-		// via the 'database' parameter; GoPG also does not support the 'options' parameter.
-		insecure: true,
-	})
+	testORMForAuthModesExcept(t,
+		testInfo{language: "go", orm: "gopg"},
+		map[authMode]string{
+			// https://github.com/go-pg/pg/blob/v10/options.go
+			// If we set up a secure deployment and went through the proxy, it would work (or should anyway), but only
+			// via the 'database' parameter; GoPG also does not support the 'options' parameter.
+			//
+			// pg: options other than 'sslmode', 'application_name' and 'connect_timeout' are not supported
+			authClientCert: "GoPG does not support custom root cert",
+			authPassword:   "GoPG does not support custom root cert",
+		})
 }
 
 func TestHibernate(t *testing.T) {
-	testORM(t, testInfo{
-		language: "java",
-		orm:      "hibernate",
-		// Possibly does not unescape the path correctly:
-		// Caused by: java.io.FileNotFoundException:
-		//	%2Ftmp%2Fcockroach-testserver913095208%2Fcerts%2Fca.crt (No such file or directory)
-		insecure: true,
-	})
+	testORMForAuthModesExcept(t, testInfo{language: "java", orm: "hibernate"}, nothingSkipped())
 }
 
 func TestSequelize(t *testing.T) {
-	testORM(t, testInfo{
-		language: "node",
-		orm:      "sequelize",
-		// Requires bespoke code to actually use SSL, see:
-		// https://github.com/sequelize/sequelize/issues/10015
-		insecure: true,
-	})
+	testORMForAuthModesExcept(t, testInfo{language: "node", orm: "sequelize"}, nothingSkipped())
 }
 
 func TestSQLAlchemy(t *testing.T) {
-	testORM(t, testInfo{
-		language: "python",
-		orm:      "sqlalchemy",
-	})
+	testORMForAuthModesExcept(t, testInfo{language: "python", orm: "sqlalchemy"}, nothingSkipped())
 }
 
 func TestDjango(t *testing.T) {
-	testORM(t, testInfo{
-		language:    "python",
-		orm:         "django",
-		tableNames:  djangoTestTableNames,
-		columnNames: djangoTestColumnNames,
-		// No support for client certs (at least not via the query string).
-		// psycopg2.OperationalError: fe_sendauth: no password supplied
-		insecure: true,
-	})
+	testORMForAuthModesExcept(
+		t,
+		testInfo{
+			language:    "python",
+			orm:         "django",
+			tableNames:  djangoTestTableNames,
+			columnNames: djangoTestColumnNames,
+		}, nothingSkipped(),
+	)
 }
 
 func TestActiveRecord(t *testing.T) {
-	testORM(t, testInfo{language: "ruby", orm: "activerecord"})
+	testORMForAuthModesExcept(t, testInfo{language: "ruby", orm: "activerecord"}, nothingSkipped())
 }
