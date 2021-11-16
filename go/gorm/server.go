@@ -248,7 +248,7 @@ func (s *Server) addProductToOrder(w http.ResponseWriter, r *http.Request, ps ht
 	var order model.Order
 	orderID := ps.ByName("orderID")
 	if err := tx.Preload("Products").First(&order, orderID).Error; err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		http.Error(w, err.Error(), errToStatusCode(err))
 		return
 	}
@@ -256,21 +256,21 @@ func (s *Server) addProductToOrder(w http.ResponseWriter, r *http.Request, ps ht
 	const productIDParam = "productID"
 	productID := r.URL.Query().Get(productIDParam)
 	if productID == "" {
-		tx.Rollback()
+		_ = tx.Rollback()
 		writeMissingParamError(w, productIDParam)
 		return
 	}
 
 	var addedProduct model.Product
 	if err := tx.First(&addedProduct, productID).Error; err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		http.Error(w, err.Error(), errToStatusCode(err))
 		return
 	}
 
 	order.Products = append(order.Products, addedProduct)
 	if err := tx.Save(&order).Error; err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		http.Error(w, err.Error(), errToStatusCode(err))
 		return
 	}

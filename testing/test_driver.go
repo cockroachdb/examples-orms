@@ -291,7 +291,9 @@ func (td testDriver) queryIDs(t *testing.T, table string) ([]int, error) {
 	var ids []int
 	for rows.Next() {
 		var id int
-		rows.Scan(&id)
+		if err := rows.Scan(&id); err != nil {
+			t.Fatal(err)
+		}
 		ids = append(ids, id)
 	}
 	if err := rows.Err(); err != nil {
@@ -336,7 +338,9 @@ func rowsToStringSlice(rows *sql.Rows) ([]string, error) {
 
 	var s []string
 	for rows.Next() {
-		rows.Scan(vals...)
+		if err := rows.Scan(vals...); err != nil {
+			return nil, err
+		}
 		s = append(s, strings.Join(strs, ", "))
 	}
 	if err := rows.Err(); err != nil {

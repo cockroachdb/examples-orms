@@ -316,7 +316,7 @@ func (s *Server) addProductToOrder(w http.ResponseWriter, r *http.Request, ps ht
 		ID: orderID,
 	}
 	if err := s.db.Model(&order).Select(); err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		http.Error(w, err.Error(), errToStatusCode(err))
 		return
 	}
@@ -324,7 +324,7 @@ func (s *Server) addProductToOrder(w http.ResponseWriter, r *http.Request, ps ht
 	const productIDParam = "productID"
 	productIDString := r.URL.Query().Get(productIDParam)
 	if productIDString == "" {
-		tx.Rollback()
+		_ = tx.Rollback()
 		writeMissingParamError(w, productIDParam)
 		return
 	}
@@ -337,14 +337,14 @@ func (s *Server) addProductToOrder(w http.ResponseWriter, r *http.Request, ps ht
 		ID: productID,
 	}
 	if err := s.db.Model(&addedProduct).Select(); err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		http.Error(w, err.Error(), errToStatusCode(err))
 		return
 	}
 
 	order.Products = append(order.Products, addedProduct)
 	if _, err := tx.Model(&order).Insert(); err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		http.Error(w, err.Error(), errToStatusCode(err))
 		return
 	}
@@ -353,7 +353,7 @@ func (s *Server) addProductToOrder(w http.ResponseWriter, r *http.Request, ps ht
 		Product: addedProduct,
 	}
 	if _, err := tx.Model(&orderProduct).Insert(); err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		http.Error(w, err.Error(), errToStatusCode(err))
 		return
 	}
