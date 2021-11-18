@@ -269,31 +269,9 @@ func testORM(t *testing.T, info testInfo, auth authMode) {
 			},
 		}
 
-		// This cockroach version supports creating tenants, add a test case to
-		// run a tenant server. We need at least 20.1-18 for everything to work out
-		// as the certificate story was reworked immediately before that version
-		// was minted.
-		var tenantsSupported bool
-		if err := db.QueryRow(`
-SELECT
-    (major = 20 AND minor = 1 AND (unstable IS NOT NULL AND unstable > 17))
-	OR (major = 20 AND minor > 1)
-	OR (major > 20)
-FROM
-	[
-		SELECT
-			regexp_extract(v, e'^(\\d+)\\.')::INT8 AS major,
-			regexp_extract(v, e'^\\d+\\.(\\d+)')::INT8
-				AS minor,
-			regexp_extract(v, e'^\\d+\\.\\d+-(\\d+)')::INT8
-				AS unstable
-		FROM
-			[SHOW CLUSTER SETTING version] AS t (v)
-	];
-`,
-		).Scan(&tenantsSupported); err != nil {
-			t.Fatalf("unable to read cluster version: %s", err)
-		}
+		// If the cockroach version supports creating tenants, add a test case to
+		// run a tenant server. We need at least v21.2 for everything to work.
+		tenantsSupported := crdbVersion.AtLeast(version.MustParse("v21.2.0-alpha"))
 		if tenantsSupported {
 			// Connect to the tenant through the SQL proxy, which is only supported
 			// when using secure+password auth. (The proxy does not support client
