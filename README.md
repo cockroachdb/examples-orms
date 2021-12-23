@@ -52,6 +52,27 @@ To run automated testing against all ORMs using a custom CockroachDB binary, run
 $ make test COCKROACH_BINARY=/path/to/binary/cockroach
 ```
 
+To run automated testing against a specific ORM, you can also specify the name with:
+
+```bash
+$ make test COCKROACH_BINARY=/path/to/binary/cockroach TESTS=TestSequelize/password
+```
+
+These tests require dependencies to be installed on your system. You can install them with:
+
+```bash
+$ make deps
+```
+
+While running tests locally, you may find it useful to comment out the lines in the Makefile that
+install the dependencies for a tool that you don't want to test.
+
+A final option is to run using docker, so that a reproducible build environment is used.
+
+```bash
+$ make dockertest COCKROACH_BINARY=/path/to/binary/cockroach
+```
+
 ## Project Structure
 
 The repository contains a set of directories named after programming
