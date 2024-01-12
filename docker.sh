@@ -21,7 +21,7 @@
 
 set -euo pipefail
 
-image=cockroachdb/example-orms-builder:20200729-1723
+image=us-east1-docker.pkg.dev/crl-ci-images/cockroach/example-orms-builder:20200729-1723
 
 gopath=$(go env GOPATH)
 gopath0=${gopath%%:*}
