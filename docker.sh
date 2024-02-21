@@ -23,9 +23,6 @@ set -euo pipefail
 
 image=us-east1-docker.pkg.dev/crl-ci-images/cockroach/example-orms-builder:20200729-1723
 
-gopath=$(go env GOPATH)
-gopath0=${gopath%%:*}
-
 # Absolute path to this repository.
 repo_root=$(cd "$(dirname "${0}")" && pwd)
 
@@ -46,7 +43,7 @@ echo "${username}:x:${uid_gid}::/home/${username}:/bin/bash" > "${container_root
 exec docker run \
   --volume="${container_root}/etc/passwd:/etc/passwd" \
   --volume="${container_root}/home/${username}:/home/${username}" \
-  --volume="${gopath0}/src:/home/${username}/go/src" \
+  --volume="${repo_root}:/home/${username}/go/src/github.com/cockroachdb/examples-orms" \
   --workdir="/home/${username}/go/src/github.com/cockroachdb/examples-orms" \
   --env=PIP_USER=1 \
   --env=GEM_HOME="/home/${username}/.gems" \
