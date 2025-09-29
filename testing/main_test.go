@@ -112,9 +112,7 @@ func startServerWithApplication(
 func getVersionFromDB(t *testing.T, db *sql.DB) *version.Version {
 	t.Helper()
 	var crdbVersion string
-	if err := db.QueryRow(
-		`SELECT value FROM crdb_internal.node_build_info where field = 'Version'`,
-	).Scan(&crdbVersion); err != nil {
+	if err := db.QueryRow("SHOW crdb_version").Scan(&crdbVersion); err != nil {
 		t.Fatal(err)
 	}
 	v, err := version.Parse(crdbVersion)
